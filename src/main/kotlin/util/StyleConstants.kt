@@ -24,9 +24,17 @@ object StyleConstants {
 
     // Layout
     const val DEFAULT_COLUMNS = 3
-    const val PHOTO_PANE_WIDTH_RATIO = 0.6
-    const val CATEGORY_PANE_WIDTH_RATIO = 0.4
+    const val PHOTO_PANE_WIDTH_RATIO = 0.7
+    const val CATEGORY_PANE_WIDTH_RATIO = 0.3
     const val COLUMN_WIDTH_ESTIMATE = 150.0
+    
+    // Category Card
+    const val CATEGORY_CARD_WIDTH = 220.0
+    const val CATEGORY_CARD_THUMBNAIL_SIZE = 120.0
+    const val CATEGORY_CARD_PADDING = 10.0
+    const val CATEGORY_CARD_BORDER_COLOR = "#cccccc"
+    const val CATEGORY_CARD_HOVER_BORDER_COLOR = "#999999"
+    const val CATEGORY_SELECTED_BACKGROUND = "#e3f2fd"
 
     // Drag and drop
     const val DRAG_OPACITY = 0.5

@@ -36,13 +36,22 @@ class PhotoCategorizerApp : Application() {
 
     // UI Components
     private val imageViews = mutableListOf<ImageView>()
+    private val categoryCardMap = mutableMapOf<Category, ui.component.CategoryCard>()
+    
+    // Selection state
+    private var selectedCategory: Category? = null
     private val imageContainer = TilePane().apply {
         orientation = javafx.geometry.Orientation.HORIZONTAL
         hgap = 10.0
         vgap = 10.0
         prefColumns = StyleConstants.DEFAULT_COLUMNS
     }
-    private val categoryContainer = HBox().apply { spacing = 10.0 }
+    private val categoryContainer = TilePane().apply { 
+        hgap = 15.0
+        vgap = 15.0
+        prefColumns = 2
+        style = "-fx-padding: 10;"
+    }
 
     // Handlers
     private lateinit var selectionHandler: SelectionHandler
@@ -63,7 +72,8 @@ class PhotoCategorizerApp : Application() {
             categoryService,
             imageViews
         ) {
-            updateImageDisplay()
+            // Refresh the main grid based on current selection state
+            updateMainGridForCategory(selectedCategory)
             selectionHandler.clearSelection()
         }
 
@@ -72,7 +82,8 @@ class PhotoCategorizerApp : Application() {
         val addCategoryButton = createAddCategoryButton()
 
         val categoryScrollPane = ScrollPane(categoryContainer).apply {
-            fitToWidthProperty().set(false)
+            fitToWidthProperty().set(true)
+            style = "-fx-background-color: #f5f5f5; -fx-background: #f5f5f5;"
         }
 
         val categoryVBox = VBox(addCategoryButton, categoryScrollPane).apply {
@@ -135,10 +146,15 @@ class PhotoCategorizerApp : Application() {
             scrollPane.prefWidth = width * StyleConstants.PHOTO_PANE_WIDTH_RATIO
             categoryVBox.prefWidth = width * StyleConstants.CATEGORY_PANE_WIDTH_RATIO
             
-            // Update grid columns
+            // Update photo grid columns
             val photoPaneWidth = width * StyleConstants.PHOTO_PANE_WIDTH_RATIO
             val columns = maxOf(1, (photoPaneWidth / StyleConstants.COLUMN_WIDTH_ESTIMATE).toInt())
             imageContainer.prefColumns = columns
+            
+            // Update category grid columns
+            val categoryPaneWidth = width * StyleConstants.CATEGORY_PANE_WIDTH_RATIO
+            val categoryColumns = maxOf(1, (categoryPaneWidth / (StyleConstants.CATEGORY_CARD_WIDTH + 15)).toInt())
+            categoryContainer.prefColumns = categoryColumns
         }
 
         primaryStage.scene.heightProperty().addListener { _, _, newValue ->
@@ -156,6 +172,12 @@ class PhotoCategorizerApp : Application() {
         // Clear previous UI state
         imageViews.clear()
         selectionHandler.clearSelection()
+        
+        // Reset category selection
+        selectedCategory?.let { category ->
+            categoryCardMap[category]?.setSelected(false)
+        }
+        selectedCategory = null
 
         // Create ImageViews for each photo
         for (photo in photos) {
@@ -186,43 +208,174 @@ class PhotoCategorizerApp : Application() {
     private fun addCategory() {
         val category = categoryService.createCategory()
         
-        val categoryLabel = Label(category.name).apply {
-            font = Font.font(14.0)
-        }
-
-        val photoContainer = VBox().apply {
-            spacing = 5.0
-        }
-
-        val categoryLane = VBox(categoryLabel, photoContainer).apply {
-            spacing = 10.0
-            style = StyleConstants.CATEGORY_NORMAL_STYLE
-            setPrefWidth(250.0)
-
-            setOnDragOver { event ->
-                dragDropHandler.handleDragOver(event)
+        // Create card reference first
+        lateinit var categoryCard: ui.component.CategoryCard
+        
+        categoryCard = ui.component.CategoryCard(
+            category = category,
+            onDeleteRequested = {
+                deleteCategory(category)
+            },
+            onSelectionChanged = { isSelected ->
+                handleCategorySelection(category, categoryCard, isSelected)
             }
+        )
 
-            setOnDragEntered { event ->
-                if (dragDropHandler.getDraggedImageView() != null && event.dragboard.hasString()) {
-                    style = StyleConstants.CATEGORY_DRAG_OVER_STYLE
+        // Store category-card mapping
+        categoryCardMap[category] = categoryCard
+
+        val photoContainer = categoryCard.getPhotoContainer()
+
+        // Setup drag-and-drop handlers
+        categoryCard.setOnDragOver { event ->
+            dragDropHandler.handleDragOver(event)
+        }
+
+        categoryCard.setOnDragEntered { event ->
+            if (dragDropHandler.getDraggedImageView() != null && event.dragboard.hasString()) {
+                categoryCard.setDragOver(true)
+            }
+            event.consume()
+        }
+
+        categoryCard.setOnDragExited { event ->
+            categoryCard.setDragOver(false)
+            event.consume()
+        }
+
+        categoryCard.setOnDragDropped { event ->
+            val success = dragDropHandler.handleDragDropped(event, category, photoContainer)
+            if (success) {
+                categoryCard.updatePhotoCount()
+                // If this category is selected, refresh the main grid
+                if (selectedCategory == category) {
+                    updateMainGridForCategory(category)
                 }
-                event.consume()
             }
-
-            setOnDragExited { event ->
-                style = StyleConstants.CATEGORY_NORMAL_STYLE
-                event.consume()
-            }
-
-            setOnDragDropped { event ->
-                val success = dragDropHandler.handleDragDropped(event, category, photoContainer)
-                event.isDropCompleted = success
-                event.consume()
-            }
+            categoryCard.setDragOver(false)
+            event.isDropCompleted = success
+            event.consume()
         }
 
-        categoryContainer.children.add(categoryLane)
+        categoryContainer.children.add(categoryCard)
+    }
+    
+    private fun handleCategorySelection(category: Category, categoryCard: ui.component.CategoryCard, isSelected: Boolean) {
+        if (isSelected) {
+            // Deselect previous category if any
+            selectedCategory?.let { prevCategory ->
+                categoryCardMap[prevCategory]?.setSelected(false)
+            }
+            selectedCategory = category
+            updateMainGridForCategory(category)
+        } else {
+            selectedCategory = null
+            updateMainGridForCategory(null) // Show uncategorized photos
+        }
+    }
+    
+    private fun updateMainGridForCategory(category: Category?) {
+        imageViews.clear()
+        
+        val photosToShow = if (category != null) {
+            // Show ONLY photos from selected category
+            category.photos
+        } else {
+            // Show ONLY uncategorized photos (from PhotoService)
+            photoService.getPhotos()
+        }
+        
+        // If no photos to show, display a message
+        if (photosToShow.isEmpty() && category != null) {
+            imageContainer.children.clear()
+            val emptyLabel = Label("No photos in this category").apply {
+                style = "-fx-font-size: 16; -fx-text-fill: #999999; -fx-padding: 20;"
+            }
+            imageContainer.children.add(emptyLabel)
+            return
+        }
+        
+        // Create ImageViews for filtered photos
+        for (photo in photosToShow) {
+            val imageView = ImageUtils.createImageView(photo, StyleConstants.PHOTO_GRID_WIDTH)
+            
+            // Setup selection handler
+            imageView.setOnMouseClicked { event ->
+                selectionHandler.handleImageClick(event, imageView)
+            }
+
+            // Setup drag handlers
+            imageView.setOnDragDetected { event ->
+                val selectedImageViews = selectionHandler.getSelectedImageViews()
+                dragDropHandler.handleDragDetected(event, imageView, selectedImageViews)
+            }
+
+            imageView.setOnDragDone { event ->
+                val selectedImageViews = selectionHandler.getSelectedImageViews()
+                dragDropHandler.handleDragDone(event, selectedImageViews)
+            }
+
+            imageViews.add(imageView)
+        }
+        
+        updateImageDisplay()
+    }
+    
+    private fun deleteCategory(category: Category) {
+        // Clear selection if this category was selected
+        if (selectedCategory == category) {
+            selectedCategory = null
+        }
+        
+        // Remove from mapping
+        categoryCardMap.remove(category)
+        
+        // Remove from UI
+        val cardToRemove = categoryContainer.children.find { 
+            it is ui.component.CategoryCard && it.getCategory() == category
+        }
+        if (cardToRemove != null) {
+            categoryContainer.children.remove(cardToRemove)
+        }
+        
+        // Remove photos back to main grid
+        if (category.photos.isNotEmpty()) {
+            val photosToRestore = category.photos.toList()
+            photosToRestore.forEach { photo ->
+                photoService.setPhotos(photoService.getPhotos() + photo)
+            }
+        }
+        
+        // Update main grid - will show uncategorized photos if nothing selected
+        updateMainGridForCategory(selectedCategory)
+    }
+    
+    private fun loadPhotosIntoGrid() {
+        imageViews.clear()
+        
+        for (photo in photoService.getPhotos()) {
+            val imageView = ImageUtils.createImageView(photo, StyleConstants.PHOTO_GRID_WIDTH)
+            
+            // Setup selection handler
+            imageView.setOnMouseClicked { event ->
+                selectionHandler.handleImageClick(event, imageView)
+            }
+
+            // Setup drag handlers
+            imageView.setOnDragDetected { event ->
+                val selectedImageViews = selectionHandler.getSelectedImageViews()
+                dragDropHandler.handleDragDetected(event, imageView, selectedImageViews)
+            }
+
+            imageView.setOnDragDone { event ->
+                val selectedImageViews = selectionHandler.getSelectedImageViews()
+                dragDropHandler.handleDragDone(event, selectedImageViews)
+            }
+
+            imageViews.add(imageView)
+        }
+        
+        updateImageDisplay()
     }
 
     private fun updateImageDisplay() {

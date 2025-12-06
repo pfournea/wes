@@ -82,7 +82,11 @@ class DragDropHandler(
         if (!dragboard.hasString()) return false
 
         val indices = dragboard.string.split(",").mapNotNull { it.toIntOrNull() }
-        val photosToMove = indices.mapNotNull { index ->
+        
+        // Sort indices to maintain original order
+        val sortedIndices = indices.sorted()
+        
+        val photosToMove = sortedIndices.mapNotNull { index ->
             imageViews.getOrNull(index)?.let { iv ->
                 val photoId = ImageUtils.getPhotoId(iv)
                 photoId?.let { photoService.getPhotoById(it) }
@@ -91,19 +95,13 @@ class DragDropHandler(
 
         if (photosToMove.isEmpty()) return false
 
-        // Determine drop position
-        val mouseY = event.y
+        // Always add new photos at the END of the category (after existing photos)
         val children = photoContainer.children
-        var insertIdx = children.size
-
-        for ((i, node) in children.withIndex()) {
-            if (node is ImageView && mouseY < node.layoutY + node.boundsInParent.height / 2) {
-                insertIdx = i
-                break
-            }
-        }
+        val insertIdx = category.photos.size
 
         // Remove photos from main grid and add to category
+        // Use a counter to increment insert position for each photo to preserve order
+        var currentInsertIdx = insertIdx
         photosToMove.forEach { photo ->
             // Remove from photo service
             photoService.removePhoto(photo)
@@ -112,12 +110,13 @@ class DragDropHandler(
             val previousCategory = categoryService.findCategoryContainingPhoto(photo)
             previousCategory?.removePhoto(photo)
 
-            // Add to new category
-            categoryService.addPhotoToCategory(photo, category, insertIdx)
+            // Add to new category at incremented position to preserve order
+            categoryService.addPhotoToCategory(photo, category, currentInsertIdx)
+            currentInsertIdx++
         }
 
-        // Update ImageViews in category container
-        val imageViewsToMove = indices.mapNotNull { imageViews.getOrNull(it) }
+        // Update ImageViews in category container - use sorted indices to preserve order
+        val imageViewsToMove = sortedIndices.mapNotNull { imageViews.getOrNull(it) }
         imageViewsToMove.forEach { iv ->
             imageViews.remove(iv)
             iv.parent?.let { parent ->
@@ -128,7 +127,8 @@ class DragDropHandler(
             iv.style = "" // Clear selection border when dropped in category
         }
 
-        children.addAll(insertIdx, imageViewsToMove)
+        // Add ImageViews at the end of the container (after existing photos)
+        children.addAll(imageViewsToMove)
 
         // Notify that photos were dropped
         onPhotosDropped()
