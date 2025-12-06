@@ -125,6 +125,7 @@ class DragDropHandler(
             }
             iv.fitWidth = StyleConstants.PHOTO_CATEGORY_WIDTH
             iv.opacity = StyleConstants.NORMAL_OPACITY
+            iv.style = "" // Clear selection border when dropped in category
         }
 
         children.addAll(insertIdx, imageViewsToMove)
