@@ -8,6 +8,7 @@ import javafx.scene.image.ImageView
 import javafx.scene.layout.*
 import javafx.scene.text.Font
 import javafx.scene.text.FontWeight
+import util.ImageCache
 import util.StyleConstants
 
 /**
@@ -190,10 +191,13 @@ class CategoryCard(
         } else {
             // Show ONLY first photo as thumbnail
             val firstPhoto = category.photos[0]
-            val imageView = ImageView(firstPhoto.path.toUri().toString())
-            imageView.fitWidth = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
-            imageView.fitHeight = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
-            imageView.isPreserveRatio = true
+            val image = ImageCache.getImage(firstPhoto.path, StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE)
+            val imageView = ImageView(image).apply {
+                fitWidth = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
+                fitHeight = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
+                isPreserveRatio = true
+                isSmooth = false  // No high-quality rendering needed
+            }
             
             thumbnailContainer.children.add(imageView)
         }

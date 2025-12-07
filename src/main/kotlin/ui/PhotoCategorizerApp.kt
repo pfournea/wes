@@ -19,6 +19,7 @@ import javafx.stage.FileChooser
 import javafx.stage.Stage
 import ui.handler.DragDropHandler
 import ui.handler.SelectionHandler
+import util.ImageCache
 import util.ImageUtils
 import util.StyleConstants
 import java.io.File
@@ -170,6 +171,7 @@ class PhotoCategorizerApp : Application() {
         photoService.setPhotos(photos)
 
         // Clear previous UI state
+        ImageCache.clear()  // Clear cache when loading new photo set
         imageViews.clear()
         selectionHandler.clearSelection()
         

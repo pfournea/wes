@@ -11,12 +11,14 @@ import java.nio.file.Path
 object ImageUtils {
     /**
      * Creates an ImageView from a Photo model.
+     * Uses ImageCache for performance.
      */
     fun createImageView(photo: Photo, width: Double, preserveRatio: Boolean = true): ImageView {
-        val image = Image(photo.path.toUri().toString())
+        val image = ImageCache.getImage(photo.path, width)
         return ImageView(image).apply {
             fitWidth = width
             isPreserveRatio = preserveRatio
+            isSmooth = false  // No high-quality filtering needed
             // Store photo ID as user data for easy retrieval
             userData = photo.id
         }
