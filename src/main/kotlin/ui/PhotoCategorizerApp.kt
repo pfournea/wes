@@ -2,19 +2,20 @@ package ui
 
 import domain.model.Category
 import domain.service.CategoryService
+import domain.service.ExportService
 import domain.service.FileService
 import domain.service.PhotoService
 import domain.service.SelectionService
 import javafx.application.Application
+import javafx.concurrent.Task
 import javafx.scene.Scene
-import javafx.scene.control.Button
-import javafx.scene.control.Label
-import javafx.scene.control.ScrollPane
+import javafx.scene.control.*
 import javafx.scene.image.ImageView
 import javafx.scene.layout.HBox
 import javafx.scene.layout.TilePane
 import javafx.scene.layout.VBox
 import javafx.scene.text.Font
+import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import ui.handler.DragDropHandler
@@ -34,6 +35,7 @@ class PhotoCategorizerApp : Application() {
     private val selectionService = SelectionService()
     private val categoryService = CategoryService()
     private val fileService = FileService()
+    private val exportService = ExportService()
 
     // UI Components
     private val imageViews = mutableListOf<ImageView>()
@@ -79,6 +81,7 @@ class PhotoCategorizerApp : Application() {
         }
 
         // Create UI
+        val saveButton = createSaveButton(primaryStage)
         val uploadButton = createUploadButton(primaryStage)
         val addCategoryButton = createAddCategoryButton()
 
@@ -99,8 +102,9 @@ class PhotoCategorizerApp : Application() {
             spacing = 10.0
         }
 
-        val controlsVBox = VBox(uploadButton).apply {
+        val controlsVBox = HBox(uploadButton, saveButton).apply {
             spacing = 10.0
+            style = "-fx-padding: 10;"
         }
 
         val mainVBox = VBox(controlsVBox, root)
@@ -115,6 +119,40 @@ class PhotoCategorizerApp : Application() {
 
     private fun createUploadButton(primaryStage: Stage): Button {
         return Button("Upload Zip File").apply {
+            style = """
+                -fx-background-color: #4CAF50;
+                -fx-text-fill: white;
+                -fx-font-size: 14px;
+                -fx-font-weight: bold;
+                -fx-padding: 10 20 10 20;
+                -fx-background-radius: 5;
+                -fx-cursor: hand;
+            """.trimIndent()
+            
+            setOnMouseEntered {
+                style = """
+                    -fx-background-color: #45a049;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-font-weight: bold;
+                    -fx-padding: 10 20 10 20;
+                    -fx-background-radius: 5;
+                    -fx-cursor: hand;
+                """.trimIndent()
+            }
+            
+            setOnMouseExited {
+                style = """
+                    -fx-background-color: #4CAF50;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-font-weight: bold;
+                    -fx-padding: 10 20 10 20;
+                    -fx-background-radius: 5;
+                    -fx-cursor: hand;
+                """.trimIndent()
+            }
+            
             setOnAction {
                 val fileChooser = FileChooser().apply {
                     title = "Select Zip File"
@@ -128,12 +166,222 @@ class PhotoCategorizerApp : Application() {
         }
     }
 
+    private fun createSaveButton(primaryStage: Stage): Button {
+        return Button("Save Images").apply {
+            style = """
+                -fx-background-color: #2196F3;
+                -fx-text-fill: white;
+                -fx-font-size: 14px;
+                -fx-font-weight: bold;
+                -fx-padding: 10 20 10 20;
+                -fx-background-radius: 5;
+                -fx-cursor: hand;
+            """.trimIndent()
+            
+            setOnMouseEntered {
+                style = """
+                    -fx-background-color: #1976D2;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-font-weight: bold;
+                    -fx-padding: 10 20 10 20;
+                    -fx-background-radius: 5;
+                    -fx-cursor: hand;
+                """.trimIndent()
+            }
+            
+            setOnMouseExited {
+                style = """
+                    -fx-background-color: #2196F3;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-font-weight: bold;
+                    -fx-padding: 10 20 10 20;
+                    -fx-background-radius: 5;
+                    -fx-cursor: hand;
+                """.trimIndent()
+            }
+            
+            setOnAction {
+                handleSaveImages(primaryStage)
+            }
+        }
+    }
+
     private fun createAddCategoryButton(): Button {
         return Button("Add Category").apply {
+            style = """
+                -fx-background-color: #FF9800;
+                -fx-text-fill: white;
+                -fx-font-size: 14px;
+                -fx-font-weight: bold;
+                -fx-padding: 10 20 10 20;
+                -fx-background-radius: 5;
+                -fx-cursor: hand;
+            """.trimIndent()
+            
+            setOnMouseEntered {
+                style = """
+                    -fx-background-color: #F57C00;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-font-weight: bold;
+                    -fx-padding: 10 20 10 20;
+                    -fx-background-radius: 5;
+                    -fx-cursor: hand;
+                """.trimIndent()
+            }
+            
+            setOnMouseExited {
+                style = """
+                    -fx-background-color: #FF9800;
+                    -fx-text-fill: white;
+                    -fx-font-size: 14px;
+                    -fx-font-weight: bold;
+                    -fx-padding: 10 20 10 20;
+                    -fx-background-radius: 5;
+                    -fx-cursor: hand;
+                """.trimIndent()
+            }
+            
             setOnAction {
                 addCategory()
             }
         }
+    }
+
+    private fun handleSaveImages(primaryStage: Stage) {
+        // Check if there are categorized photos
+        val categories = categoryService.getCategories()
+        val totalPhotos = categories.sumOf { it.photos.size }
+
+        if (totalPhotos == 0) {
+            showAlert(
+                Alert.AlertType.WARNING,
+                "No Photos to Save",
+                "Please add photos to categories first."
+            )
+            return
+        }
+
+        // Show directory chooser
+        val dirChooser = DirectoryChooser().apply {
+            title = "Select Directory to Save Categorized Photos"
+        }
+        val directory = dirChooser.showDialog(primaryStage) ?: return
+
+        // Check if directory has existing files
+        val existingFiles = exportService.countFilesInDirectory(directory.toPath())
+        if (existingFiles > 0) {
+            val confirm = showConfirmDialog(
+                "Directory Warning",
+                "Directory contains $existingFiles files. All files will be deleted and replaced. Continue?"
+            )
+            if (!confirm) return
+        }
+
+        // Show progress dialog
+        val progressDialog = Dialog<Void>()
+        progressDialog.title = "Exporting Photos"
+        progressDialog.headerText = "Copying photos to ${directory.name}..."
+
+        val progressBar = ProgressBar()
+        progressBar.prefWidth = 300.0
+
+        val progressLabel = Label("Preparing...")
+        
+        val vbox = VBox(10.0, progressLabel, progressBar)
+        vbox.style = "-fx-padding: 20;"
+        progressDialog.dialogPane.content = vbox
+        progressDialog.dialogPane.buttonTypes.add(ButtonType.CANCEL)
+
+        // Create background task for export
+        val exportTask = object : Task<domain.service.ExportResult>() {
+            override fun call(): domain.service.ExportResult {
+                val totalPhotoCount = categories.sumOf { it.photos.size }
+
+                updateMessage("Deleting existing files...")
+                updateProgress(0.0, 1.0)
+
+                // Perform export
+                val result = exportService.exportCategories(categories, directory.toPath())
+
+                // Update progress to complete
+                updateProgress(1.0, 1.0)
+                updateMessage("Complete!")
+
+                return result
+            }
+        }
+
+        // Bind progress
+        progressBar.progressProperty().bind(exportTask.progressProperty())
+        progressLabel.textProperty().bind(exportTask.messageProperty())
+
+        // Handle completion
+        exportTask.setOnSucceeded {
+            progressDialog.close()
+            val result = exportTask.value
+            
+            if (result.success) {
+                showAlert(
+                    Alert.AlertType.INFORMATION,
+                    "Export Successful",
+                    "${result.photosCopied} photos saved to ${directory.absolutePath}\n" +
+                    "${result.filesDeleted} old files were deleted."
+                )
+            } else {
+                showAlert(
+                    Alert.AlertType.ERROR,
+                    "Export Failed",
+                    "Some errors occurred:\n${result.errors.joinToString("\n")}"
+                )
+            }
+        }
+
+        exportTask.setOnFailed {
+            progressDialog.close()
+            showAlert(
+                Alert.AlertType.ERROR,
+                "Export Failed",
+                "An error occurred during export: ${exportTask.exception?.message}"
+            )
+        }
+
+        exportTask.setOnCancelled {
+            progressDialog.close()
+            showAlert(
+                Alert.AlertType.INFORMATION,
+                "Export Cancelled",
+                "Export operation was cancelled by user."
+            )
+        }
+
+        // Start task in background thread
+        val thread = Thread(exportTask)
+        thread.isDaemon = true
+        thread.start()
+
+        // Show dialog
+        progressDialog.showAndWait()
+    }
+
+    private fun showAlert(type: Alert.AlertType, title: String, content: String) {
+        val alert = Alert(type)
+        alert.title = title
+        alert.headerText = null
+        alert.contentText = content
+        alert.showAndWait()
+    }
+
+    private fun showConfirmDialog(title: String, content: String): Boolean {
+        val alert = Alert(Alert.AlertType.CONFIRMATION)
+        alert.title = title
+        alert.headerText = null
+        alert.contentText = content
+        
+        val result = alert.showAndWait()
+        return result.isPresent && result.get() == ButtonType.OK
     }
 
     private fun setupResponsiveLayout(

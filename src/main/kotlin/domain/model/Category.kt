@@ -6,6 +6,7 @@ package domain.model
  */
 data class Category(
     val id: String,
+    val number: Int,
     val name: String,
     val photos: MutableList<Photo> = mutableListOf()
 ) {
@@ -29,6 +30,7 @@ data class Category(
         fun create(number: Int): Category {
             return Category(
                 id = "category_$number",
+                number = number,
                 name = "Category $number"
             )
         }
