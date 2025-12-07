@@ -37,7 +37,7 @@ class PhotoCategorizerApp : Application() {
 
     // UI Components
     private val imageViews = mutableListOf<ImageView>()
-    private val categoryCardMap = mutableMapOf<Category, ui.component.CategoryCard>()
+    private val categoryCardMap = mutableMapOf<String, ui.component.CategoryCard>()
     
     // Selection state
     private var selectedCategory: Category? = null
@@ -177,7 +177,7 @@ class PhotoCategorizerApp : Application() {
         
         // Reset category selection
         selectedCategory?.let { category ->
-            categoryCardMap[category]?.setSelected(false)
+            categoryCardMap[category.id]?.setSelected(false)
         }
         selectedCategory = null
 
@@ -224,7 +224,7 @@ class PhotoCategorizerApp : Application() {
         )
 
         // Store category-card mapping
-        categoryCardMap[category] = categoryCard
+        categoryCardMap[category.id] = categoryCard
 
         val photoContainer = categoryCard.getPhotoContainer()
 
@@ -266,7 +266,7 @@ class PhotoCategorizerApp : Application() {
         if (isSelected) {
             // Deselect previous category if any
             selectedCategory?.let { prevCategory ->
-                categoryCardMap[prevCategory]?.setSelected(false)
+                categoryCardMap[prevCategory.id]?.setSelected(false)
             }
             selectedCategory = category
             updateMainGridForCategory(category)
@@ -330,7 +330,7 @@ class PhotoCategorizerApp : Application() {
         }
         
         // Remove from mapping
-        categoryCardMap.remove(category)
+        categoryCardMap.remove(category.id)
         
         // Remove from UI
         val cardToRemove = categoryContainer.children.find { 
