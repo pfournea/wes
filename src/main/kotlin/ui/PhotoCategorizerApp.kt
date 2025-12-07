@@ -11,6 +11,7 @@ import javafx.concurrent.Task
 import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.image.ImageView
+import javafx.geometry.Orientation
 import javafx.scene.layout.HBox
 import javafx.scene.layout.TilePane
 import javafx.scene.layout.VBox
@@ -96,10 +97,21 @@ class PhotoCategorizerApp : Application() {
 
         val scrollPane = ScrollPane(imageContainer).apply {
             fitToWidthProperty().set(true)
+            minWidth = StyleConstants.MIN_PHOTO_PANE_WIDTH
         }
 
-        val root = HBox(scrollPane, categoryVBox).apply {
-            spacing = 10.0
+        // Set minimum width for category pane
+        categoryVBox.minWidth = StyleConstants.MIN_CATEGORY_PANE_WIDTH
+
+        // Create SplitPane with resizable divider
+        val root = SplitPane(scrollPane, categoryVBox).apply {
+            orientation = Orientation.HORIZONTAL
+            setDividerPositions(StyleConstants.DEFAULT_DIVIDER_POSITION)
+            
+            // Style the divider
+            style = """
+                -fx-background-color: #f5f5f5;
+            """.trimIndent()
         }
 
         val controlsVBox = HBox(uploadButton, saveButton).apply {
@@ -390,22 +402,29 @@ class PhotoCategorizerApp : Application() {
         categoryVBox: VBox,
         categoryScrollPane: ScrollPane
     ) {
-        primaryStage.scene.widthProperty().addListener { _, _, newValue ->
-            val width = newValue.toDouble()
-            scrollPane.prefWidth = width * StyleConstants.PHOTO_PANE_WIDTH_RATIO
-            categoryVBox.prefWidth = width * StyleConstants.CATEGORY_PANE_WIDTH_RATIO
-            
-            // Update photo grid columns
-            val photoPaneWidth = width * StyleConstants.PHOTO_PANE_WIDTH_RATIO
-            val columns = maxOf(1, (photoPaneWidth / StyleConstants.COLUMN_WIDTH_ESTIMATE).toInt())
+        // Listen to photo pane width changes for dynamic column calculation
+        scrollPane.widthProperty().addListener { _, _, newValue ->
+            val paneWidth = newValue.toDouble()
+            // Account for scrollbar and padding
+            val availableWidth = paneWidth - StyleConstants.SCROLLBAR_WIDTH_ESTIMATE
+            // Calculate columns based on actual image width + gap
+            val columnWidth = StyleConstants.PHOTO_GRID_WIDTH + imageContainer.hgap
+            val columns = maxOf(1, (availableWidth / columnWidth).toInt())
             imageContainer.prefColumns = columns
-            
-            // Update category grid columns
-            val categoryPaneWidth = width * StyleConstants.CATEGORY_PANE_WIDTH_RATIO
-            val categoryColumns = maxOf(1, (categoryPaneWidth / (StyleConstants.CATEGORY_CARD_WIDTH + 15)).toInt())
+        }
+        
+        // Listen to category pane width changes for dynamic column calculation
+        categoryScrollPane.widthProperty().addListener { _, _, newValue ->
+            val paneWidth = newValue.toDouble()
+            // Account for scrollbar and padding
+            val availableWidth = paneWidth - StyleConstants.SCROLLBAR_WIDTH_ESTIMATE - 20
+            // Calculate columns based on category card width + gap
+            val columnWidth = StyleConstants.CATEGORY_CARD_WIDTH + categoryContainer.hgap
+            val categoryColumns = maxOf(1, (availableWidth / columnWidth).toInt())
             categoryContainer.prefColumns = categoryColumns
         }
 
+        // Update pane heights on window resize
         primaryStage.scene.heightProperty().addListener { _, _, newValue ->
             val height = newValue.toDouble()
             scrollPane.prefHeight = height - 50

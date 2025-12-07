@@ -24,9 +24,10 @@ object StyleConstants {
 
     // Layout
     const val DEFAULT_COLUMNS = 3
-    const val PHOTO_PANE_WIDTH_RATIO = 0.7
-    const val CATEGORY_PANE_WIDTH_RATIO = 0.3
-    const val COLUMN_WIDTH_ESTIMATE = 150.0
+    const val DEFAULT_DIVIDER_POSITION = 0.7  // 70% for photos, 30% for categories
+    const val MIN_PHOTO_PANE_WIDTH = 300.0    // Minimum width for photo pane
+    const val MIN_CATEGORY_PANE_WIDTH = 250.0 // Minimum width for category pane
+    const val SCROLLBAR_WIDTH_ESTIMATE = 18.0 // Estimated scrollbar width
     
     // Category Card
     const val CATEGORY_CARD_WIDTH = 220.0
