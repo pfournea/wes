@@ -89,11 +89,21 @@ class DragDropHandler(
         val photosToMove = sortedIndices.mapNotNull { index ->
             imageViews.getOrNull(index)?.let { iv ->
                 val photoId = ImageUtils.getPhotoId(iv)
-                photoId?.let { photoService.getPhotoById(it) }
+                // Try to find photo in PhotoService (uncategorized) or in any category
+                photoId?.let { 
+                    photoService.getPhotoById(it) ?: categoryService.findPhotoById(it)
+                }
             }
         }
 
         if (photosToMove.isEmpty()) return false
+
+        // Check if all photos are already in the target category (same-category drop)
+        val allPhotosAlreadyInCategory = photosToMove.all { category.containsPhoto(it) }
+        if (allPhotosAlreadyInCategory) {
+            // No-op: dragging photos back to their own category
+            return false
+        }
 
         // Always add new photos at the END of the category (after existing photos)
         val children = photoContainer.children
@@ -103,6 +113,11 @@ class DragDropHandler(
         // Use a counter to increment insert position for each photo to preserve order
         var currentInsertIdx = insertIdx
         photosToMove.forEach { photo ->
+            // Skip if photo is already in this category
+            if (category.containsPhoto(photo)) {
+                return@forEach
+            }
+
             // Remove from photo service
             photoService.removePhoto(photo)
 

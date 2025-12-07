@@ -49,6 +49,17 @@ class CategoryService {
     }
 
     /**
+     * Finds a photo by ID across all categories.
+     */
+    fun findPhotoById(photoId: String): Photo? {
+        categories.forEach { category ->
+            val photo = category.photos.find { it.id == photoId }
+            if (photo != null) return photo
+        }
+        return null
+    }
+
+    /**
      * Gets a category by its ID.
      */
     fun getCategoryById(categoryId: String): Category? {
