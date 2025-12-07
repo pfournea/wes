@@ -1,42 +1,43 @@
-# AGENTS.MD
+# AGENTS.MD - Coding Agent Instructions
 
-## JavaFX Coding Agent Instructions
+## Build/Test Commands
+- Build: `./gradlew build`
+- Run app: `./gradlew run`
+- Run all tests: `./gradlew test`
+- Run single test: `./gradlew test --tests "ClassName"` (e.g., `--tests "PhotoServiceTest"`)
+- Clean: `./gradlew clean`
 
-This coding agent is an expert in JavaFX application development. All code, configuration, and project structure must adhere to the following guidelines:
+## Language & Framework
+- Kotlin 2.2.21 with JVM target 21
+- JavaFX 21.0.2 for UI
+- JUnit 5 for testing
 
-### 1. Programming Language
-- **Kotlin** is the required language for all source code.
+## Code Style
 
-### 2. Build Tool
-- Use the **Gradle wrapper** (`./gradlew`) for all build, test, and run operations.
-- All dependencies and build scripts must be compatible with Gradle.
+### Imports & Formatting
+- Group imports by: domain, javafx, util, java stdlib
+- No wildcard imports
+- Organize: package > imports > blank line > KDoc > class
 
-### 3. Project Structure
-- **Source code** must reside in: `src/main/kotlin`
-- **Documentation** must be placed in: `/docs`
-- Follow standard Gradle project conventions for resources, tests, and configuration files.
+### Naming & Structure
+- Classes: PascalCase (e.g., `PhotoService`, `CategoryCard`)
+- Functions: camelCase with descriptive verb+noun (e.g., `getPhotoById`, `handleDragDetected`)
+- Properties: camelCase for mutable, UPPER_SNAKE_CASE for constants in `object`
+- Packages: lowercase, organized as `domain/model`, `domain/service`, `ui/component`, `ui/handler`, `util`
 
-### 4. JavaFX Guidelines
-- Use the latest stable JavaFX libraries compatible with Kotlin and Gradle.
-- Structure applications using best practices for JavaFX (e.g., MVC or MVVM patterns).
-- Ensure all UI code is idiomatic Kotlin and leverages JavaFX features.
+### Types & Nullability
+- Use explicit types for public APIs; infer for local variables
+- Prefer immutability: `val` over `var`, `List` over `MutableList` in return types
+- Use `?` for nullable types, handle with `?.`, `?:`, or explicit null checks
+- Return copies from services (e.g., `photos.toList()`) to protect internal state
 
-### 5. Documentation
-- All technical and user documentation should be placed in the `/docs` directory.
-- Documentation should be clear, concise, and up to date with the codebase.
+### Documentation & Testing
+- KDoc on all public classes and functions with `@param`, `@return` where applicable
+- Test structure: `@Nested` inner classes with `@DisplayName`, backtick test names
+- Test pattern: arrange-act-assert with descriptive assertions
 
-### 6. General Coding Standards
-- Write clean, idiomatic Kotlin code.
-- Use meaningful names and provide comments where necessary.
-- Ensure the project builds and runs successfully using the Gradle wrapper.
-
----
-
-**Summary:**
-- Language: Kotlin
-- UI Framework: JavaFX
-- Build Tool: Gradle wrapper
-- Source Directory: `src/main/kotlin`
-- Documentation Directory: `/docs`
-
-Follow these instructions for all code and documentation contributions to this project.
+### Domain-Driven Design
+- Pure domain models in `domain/model` (no UI dependencies)
+- Business logic in `domain/service`
+- UI concerns strictly in `ui` package
+- Use dependency injection via constructor parameters
