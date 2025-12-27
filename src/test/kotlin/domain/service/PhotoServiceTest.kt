@@ -351,4 +351,68 @@ class PhotoServiceTest {
             assertEquals(0, photoService.getIndexOfPhoto(photo3.id))
         }
     }
+
+    @Nested
+    @DisplayName("Photo Restoration")
+    inner class PhotoRestorationTests {
+
+        @Test
+        fun `should restore photos in original index order`() {
+            photoService.setPhotos(listOf(photo1, photo3))
+            
+            photoService.restorePhotos(listOf(photo2))
+
+            assertEquals(3, photoService.getPhotoCount())
+            assertEquals(photo1, photoService.getPhotoByIndex(0))
+            assertEquals(photo2, photoService.getPhotoByIndex(1))
+            assertEquals(photo3, photoService.getPhotoByIndex(2))
+        }
+
+        @Test
+        fun `should restore multiple photos maintaining sequence`() {
+            photoService.setPhotos(listOf(photo2))
+            
+            photoService.restorePhotos(listOf(photo3, photo1))
+
+            assertEquals(3, photoService.getPhotoCount())
+            assertEquals(photo1, photoService.getPhotoByIndex(0))
+            assertEquals(photo2, photoService.getPhotoByIndex(1))
+            assertEquals(photo3, photoService.getPhotoByIndex(2))
+        }
+
+        @Test
+        fun `should handle restoring to empty collection`() {
+            photoService.restorePhotos(listOf(photo2, photo1, photo3))
+
+            assertEquals(3, photoService.getPhotoCount())
+            assertEquals(photo1, photoService.getPhotoByIndex(0))
+            assertEquals(photo2, photoService.getPhotoByIndex(1))
+            assertEquals(photo3, photoService.getPhotoByIndex(2))
+        }
+
+        @Test
+        fun `should handle empty restore list`() {
+            photoService.setPhotos(photoList)
+            
+            photoService.restorePhotos(emptyList())
+
+            assertEquals(3, photoService.getPhotoCount())
+        }
+
+        @Test
+        fun `should restore photos with non-contiguous original indices`() {
+            val photoA = Photo.fromPath(Paths.get("/test/photoA.jpg"), 0)
+            val photoB = Photo.fromPath(Paths.get("/test/photoB.jpg"), 5)
+            val photoC = Photo.fromPath(Paths.get("/test/photoC.jpg"), 10)
+            
+            photoService.setPhotos(listOf(photoA, photoC))
+            
+            photoService.restorePhotos(listOf(photoB))
+
+            assertEquals(3, photoService.getPhotoCount())
+            assertEquals(photoA, photoService.getPhotoByIndex(0))
+            assertEquals(photoB, photoService.getPhotoByIndex(1))
+            assertEquals(photoC, photoService.getPhotoByIndex(2))
+        }
+    }
 }

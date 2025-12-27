@@ -21,7 +21,9 @@
 2. Display photos in a resizable grid
 3. Create categories and drag-drop photos into them
 4. Multi-select photos (click, Ctrl+click, Shift+click)
-5. Export categorized photos to directories
+5. Reorder photos within categories via drag-and-drop
+6. Move photos between categories from category view
+7. Export categorized photos to directories
 
 ## Architecture
 
@@ -45,7 +47,8 @@ src/main/kotlin/
 │   ├── component/
 │   │   └── CategoryCard.kt          # UI component for category display
 │   └── handler/
-│       ├── DragDropHandler.kt       # Drag-and-drop logic
+│       ├── DragDropHandler.kt       # Drag-and-drop to categories
+│       ├── ReorderDragDropHandler.kt # Reorder photos within category view
 │       └── SelectionHandler.kt      # Click/selection logic
 └── util/
     ├── ImageCache.kt                # LRU cache for loaded images
@@ -55,13 +58,16 @@ src/main/kotlin/
 
 ### Key Design Patterns
 - **Services hold state**: `PhotoService` owns uncategorized photos, `CategoryService` owns categories
-- **Handlers delegate UI events**: `SelectionHandler` and `DragDropHandler` encapsulate complex UI logic
+- **Handlers delegate UI events**: `SelectionHandler`, `DragDropHandler`, and `ReorderDragDropHandler` encapsulate complex UI logic
 - **Models are mutable internally**: `Category.photos` is `MutableList`, but services return copies
+- **Original order preserved**: `Photo.originalIndex` maintains original sequence for restoration when categories are deleted
 
 ### Data Flow
 1. ZIP loaded → `FileService.extractPhotosFromZip()` → `PhotoService.setPhotos()`
-2. Photo dragged → `DragDropHandler` → `CategoryService.addPhotoToCategory()` + `PhotoService.removePhoto()`
-3. Export → `ExportService.exportCategories()` copies files to category subdirectories
+2. Photo dragged to category → `DragDropHandler` → `CategoryService.addPhotoToCategory()` + `PhotoService.removePhoto()`
+3. Photo reordered in category view → `ReorderDragDropHandler` → `CategoryService.reorderPhotoInCategory()`
+4. Category deleted → `PhotoService.restorePhotos()` sorts by `originalIndex`
+5. Export → `ExportService.exportCategories()` copies files to category subdirectories
 
 ## Code Style
 

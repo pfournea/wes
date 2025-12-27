@@ -74,6 +74,17 @@ class PhotoService {
     }
 
     /**
+     * Restores photos to the collection, maintaining original index order.
+     * Photos are inserted at positions that preserve their originalIndex sequence.
+     */
+    fun restorePhotos(photosToRestore: List<Photo>) {
+        if (photosToRestore.isEmpty()) return
+        
+        photos.addAll(photosToRestore)
+        photos.sortBy { it.originalIndex }
+    }
+
+    /**
      * Gets photos by indices.
      */
     fun getPhotosByIndices(indices: List<Int>): List<Photo> {

@@ -42,6 +42,13 @@ class CategoryService {
     }
 
     /**
+     * Reorders a photo within a category to a new position.
+     */
+    fun reorderPhotoInCategory(photo: Photo, category: Category, newPosition: Int): Boolean {
+        return category.reorderPhoto(photo, newPosition)
+    }
+
+    /**
      * Finds which category contains a photo, if any.
      */
     fun findCategoryContainingPhoto(photo: Photo): Category? {

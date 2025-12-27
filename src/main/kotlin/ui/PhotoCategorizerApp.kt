@@ -20,6 +20,7 @@ import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import ui.handler.DragDropHandler
+import ui.handler.ReorderDragDropHandler
 import ui.handler.SelectionHandler
 import util.ImageCache
 import util.ImageUtils
@@ -60,6 +61,7 @@ class PhotoCategorizerApp : Application() {
     // Handlers
     private lateinit var selectionHandler: SelectionHandler
     private lateinit var dragDropHandler: DragDropHandler
+    private lateinit var reorderDragDropHandler: ReorderDragDropHandler
 
     override fun start(primaryStage: Stage) {
         primaryStage.title = "Photo Categorizer"
@@ -79,6 +81,14 @@ class PhotoCategorizerApp : Application() {
             // Refresh the main grid based on current selection state
             updateMainGridForCategory(selectedCategory)
             selectionHandler.clearSelection()
+        }
+
+        reorderDragDropHandler = ReorderDragDropHandler(
+            categoryService,
+            imageViews
+        ) {
+            // Refresh after reorder to show new order
+            updateMainGridForCategory(selectedCategory)
         }
 
         // Create UI
@@ -573,21 +583,60 @@ class PhotoCategorizerApp : Application() {
                 selectionHandler.handleImageClick(event, imageView)
             }
 
-            // Setup drag handlers
-            imageView.setOnDragDetected { event ->
-                val selectedImageViews = selectionHandler.getSelectedImageViews()
-                dragDropHandler.handleDragDetected(event, imageView, selectedImageViews)
-            }
-
-            imageView.setOnDragDone { event ->
-                val selectedImageViews = selectionHandler.getSelectedImageViews()
-                dragDropHandler.handleDragDone(event, selectedImageViews)
+            if (category != null) {
+                // Category view: setup normal drag handlers (works with category cards)
+                // AND reorder capability within the same category
+                setupCategoryViewDragHandlers(imageView, category)
+            } else {
+                // Uncategorized view: setup normal drag handlers (to categories)
+                setupNormalDragHandlers(imageView)
             }
 
             imageViews.add(imageView)
         }
         
+        // Setup drag-over/drop on imageContainer for reordering when in category view
+        if (category != null) {
+            imageContainer.setOnDragOver { event ->
+                reorderDragDropHandler.handleDragOver(event, imageContainer, category)
+            }
+            imageContainer.setOnDragDropped { event ->
+                reorderDragDropHandler.handleDragDropped(event, category, imageContainer)
+                event.isDropCompleted = true
+                event.consume()
+            }
+            imageContainer.setOnDragExited { event ->
+                reorderDragDropHandler.handleDragExited(event, imageContainer)
+            }
+        } else {
+            imageContainer.onDragOver = null
+            imageContainer.onDragDropped = null
+            imageContainer.onDragExited = null
+        }
+        
         updateImageDisplay()
+    }
+    
+    private fun setupCategoryViewDragHandlers(imageView: ImageView, category: Category) {
+        imageView.setOnDragDetected { event ->
+            val selectedImageViews = selectionHandler.getSelectedImageViews()
+            dragDropHandler.handleDragDetected(event, imageView, selectedImageViews)
+        }
+        imageView.setOnDragDone { event ->
+            val selectedImageViews = selectionHandler.getSelectedImageViews()
+            dragDropHandler.handleDragDone(event, selectedImageViews)
+        }
+    }
+    
+    private fun setupNormalDragHandlers(imageView: ImageView) {
+        imageView.setOnDragDetected { event ->
+            val selectedImageViews = selectionHandler.getSelectedImageViews()
+            dragDropHandler.handleDragDetected(event, imageView, selectedImageViews)
+        }
+        imageView.setOnDragDone { event ->
+            val selectedImageViews = selectionHandler.getSelectedImageViews()
+            dragDropHandler.handleDragDone(event, selectedImageViews)
+        }
     }
     
     private fun deleteCategory(category: Category) {
@@ -607,12 +656,9 @@ class PhotoCategorizerApp : Application() {
             categoryContainer.children.remove(cardToRemove)
         }
         
-        // Remove photos back to main grid
+        // Restore photos back to main collection in original sequence order
         if (category.photos.isNotEmpty()) {
-            val photosToRestore = category.photos.toList()
-            photosToRestore.forEach { photo ->
-                photoService.setPhotos(photoService.getPhotos() + photo)
-            }
+            photoService.restorePhotos(category.photos.toList())
         }
         
         // Update main grid - will show uncategorized photos if nothing selected

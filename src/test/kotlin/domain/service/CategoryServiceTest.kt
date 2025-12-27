@@ -287,4 +287,159 @@ class CategoryServiceTest {
             assertEquals(2, category.photos.size)
         }
     }
+
+    @Nested
+    @DisplayName("Photo Reordering")
+    inner class PhotoReorderingTests {
+
+        @Test
+        fun `should reorder photo to new position`() {
+            val category = categoryService.createCategory()
+            categoryService.addPhotoToCategory(photo1, category)
+            categoryService.addPhotoToCategory(photo2, category)
+            categoryService.addPhotoToCategory(photo3, category)
+
+            val result = categoryService.reorderPhotoInCategory(photo3, category, 0)
+
+            assertTrue(result)
+            assertEquals(photo3, category.photos[0])
+            assertEquals(photo1, category.photos[1])
+            assertEquals(photo2, category.photos[2])
+        }
+
+        @Test
+        fun `should reorder photo from first to last position`() {
+            val category = categoryService.createCategory()
+            categoryService.addPhotoToCategory(photo1, category)
+            categoryService.addPhotoToCategory(photo2, category)
+            categoryService.addPhotoToCategory(photo3, category)
+
+            val result = categoryService.reorderPhotoInCategory(photo1, category, 3)
+
+            assertTrue(result)
+            assertEquals(photo2, category.photos[0])
+            assertEquals(photo3, category.photos[1])
+            assertEquals(photo1, category.photos[2])
+        }
+
+        @Test
+        fun `should return false for photo not in category`() {
+            val category = categoryService.createCategory()
+            categoryService.addPhotoToCategory(photo1, category)
+
+            val result = categoryService.reorderPhotoInCategory(photo2, category, 0)
+
+            assertFalse(result)
+        }
+
+        @Test
+        fun `should return false for invalid position`() {
+            val category = categoryService.createCategory()
+            categoryService.addPhotoToCategory(photo1, category)
+
+            val result = categoryService.reorderPhotoInCategory(photo1, category, -1)
+
+            assertFalse(result)
+        }
+
+        @Test
+        fun `should return true when photo already at target position`() {
+            val category = categoryService.createCategory()
+            categoryService.addPhotoToCategory(photo1, category)
+            categoryService.addPhotoToCategory(photo2, category)
+
+            val result = categoryService.reorderPhotoInCategory(photo1, category, 0)
+
+            assertTrue(result)
+            assertEquals(photo1, category.photos[0])
+            assertEquals(photo2, category.photos[1])
+        }
+
+        @Test
+        fun `should preserve originalIndex after reordering`() {
+            val category = categoryService.createCategory()
+            categoryService.addPhotoToCategory(photo1, category)
+            categoryService.addPhotoToCategory(photo2, category)
+            categoryService.addPhotoToCategory(photo3, category)
+
+            categoryService.reorderPhotoInCategory(photo3, category, 0)
+
+            // After reorder: [photo3, photo1, photo2]
+            // originalIndex values should remain unchanged
+            assertEquals(2, category.photos[0].originalIndex) // photo3 still has originalIndex=2
+            assertEquals(0, category.photos[1].originalIndex) // photo1 still has originalIndex=0
+            assertEquals(1, category.photos[2].originalIndex) // photo2 still has originalIndex=1
+        }
+    }
+
+    @Nested
+    @DisplayName("Cross-Category Photo Movement")
+    inner class CrossCategoryMovementTests {
+
+        @Test
+        fun `should move photo from one category to another`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            
+            categoryService.addPhotoToCategory(photo1, category1)
+            categoryService.addPhotoToCategory(photo2, category1)
+            
+            categoryService.removePhotoFromCategory(photo1, category1)
+            categoryService.addPhotoToCategory(photo1, category2)
+            
+            assertFalse(category1.containsPhoto(photo1))
+            assertTrue(category1.containsPhoto(photo2))
+            assertTrue(category2.containsPhoto(photo1))
+            assertEquals(1, category1.photos.size)
+            assertEquals(1, category2.photos.size)
+        }
+
+        @Test
+        fun `should move multiple photos between categories`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            
+            categoryService.addPhotoToCategory(photo1, category1)
+            categoryService.addPhotoToCategory(photo2, category1)
+            categoryService.addPhotoToCategory(photo3, category1)
+            
+            categoryService.removePhotoFromCategory(photo1, category1)
+            categoryService.removePhotoFromCategory(photo3, category1)
+            categoryService.addPhotoToCategory(photo1, category2)
+            categoryService.addPhotoToCategory(photo3, category2)
+            
+            assertEquals(1, category1.photos.size)
+            assertEquals(2, category2.photos.size)
+            assertTrue(category1.containsPhoto(photo2))
+            assertTrue(category2.containsPhoto(photo1))
+            assertTrue(category2.containsPhoto(photo3))
+        }
+
+        @Test
+        fun `should preserve photo originalIndex after cross-category move`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            
+            categoryService.addPhotoToCategory(photo1, category1)
+            
+            categoryService.removePhotoFromCategory(photo1, category1)
+            categoryService.addPhotoToCategory(photo1, category2)
+            
+            assertEquals(0, category2.photos[0].originalIndex)
+        }
+
+        @Test
+        fun `should find photo in new category after move`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            
+            categoryService.addPhotoToCategory(photo1, category1)
+            assertEquals(category1, categoryService.findCategoryContainingPhoto(photo1))
+            
+            categoryService.removePhotoFromCategory(photo1, category1)
+            categoryService.addPhotoToCategory(photo1, category2)
+            
+            assertEquals(category2, categoryService.findCategoryContainingPhoto(photo1))
+        }
+    }
 }
