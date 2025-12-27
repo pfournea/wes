@@ -29,9 +29,9 @@ class CategoryServicePhotoLookupTest {
         photo2 = Photo.fromPath(Paths.get("/test/photo2.jpg"), 1)
         photo3 = Photo.fromPath(Paths.get("/test/photo3.jpg"), 2)
         
-        category1.addPhoto(photo1)
-        category1.addPhoto(photo2)
-        category2.addPhoto(photo3)
+        category1 = categoryService.addPhotoToCategory(photo1, category1)
+        category1 = categoryService.addPhotoToCategory(photo2, category1)
+        category2 = categoryService.addPhotoToCategory(photo3, category2)
     }
 
     @Nested
@@ -72,9 +72,8 @@ class CategoryServicePhotoLookupTest {
 
         @Test
         fun `should find photo after moving between categories`() {
-            // Move photo1 from category1 to category2
-            category1.removePhoto(photo1)
-            category2.addPhoto(photo1)
+            category1 = categoryService.removePhotoFromCategory(photo1, category1)
+            category2 = categoryService.addPhotoToCategory(photo1, category2)
             
             val found = categoryService.findPhotoById(photo1.id)
             
@@ -84,7 +83,7 @@ class CategoryServicePhotoLookupTest {
 
         @Test
         fun `should not find photo after removal`() {
-            category1.removePhoto(photo1)
+            category1 = categoryService.removePhotoFromCategory(photo1, category1)
             
             val found = categoryService.findPhotoById(photo1.id)
             
@@ -93,14 +92,12 @@ class CategoryServicePhotoLookupTest {
 
         @Test
         fun `should handle multiple categories with same photo IDs`() {
-            // This shouldn't happen in practice, but test robustness
-            val photo4 = Photo.fromPath(Paths.get("/test/photo1.jpg"), 0) // Same ID as photo1
-            category2.addPhoto(photo4)
+            val photo4 = Photo.fromPath(Paths.get("/test/photo1.jpg"), 0)
+            category2 = categoryService.addPhotoToCategory(photo4, category2)
             
             val found = categoryService.findPhotoById(photo1.id)
             
             assertNotNull(found)
-            // Should find the first occurrence
             assertEquals(photo1.id, found?.id)
         }
     }

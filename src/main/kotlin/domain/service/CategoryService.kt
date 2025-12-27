@@ -2,17 +2,15 @@ package domain.service
 
 import domain.model.Category
 import domain.model.Photo
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Service for managing categories and photo assignments.
- * Contains pure business logic with no UI dependencies.
+ * Thread-safe and maintains immutable Category instances internally.
  */
 class CategoryService {
-    private val categories = mutableListOf<Category>()
+    private val categories = CopyOnWriteArrayList<Category>()
 
-    /**
-     * Creates a new category with auto-incremented number.
-     */
     fun createCategory(): Category {
         val nextNumber = categories.size + 1
         val category = Category.create(nextNumber)
@@ -20,44 +18,62 @@ class CategoryService {
         return category
     }
 
-    /**
-     * Gets all categories.
-     */
-    fun getCategories(): List<Category> {
-        return categories.toList()
+    fun getCategories(): List<Category> = categories.toList()
+
+    fun addPhotoToCategory(photo: Photo, category: Category, position: Int? = null): Category {
+        val index = categories.indexOfFirst { it.id == category.id }
+        if (index == -1) return category
+
+        val currentCategory = categories[index]
+        val newPhotos = currentCategory.photos.toMutableList()
+        
+        if (position != null && position in 0..newPhotos.size) {
+            newPhotos.add(position, photo)
+        } else {
+            newPhotos.add(photo)
+        }
+        
+        val updatedCategory = currentCategory.copy(photos = newPhotos)
+        categories[index] = updatedCategory
+        return updatedCategory
     }
 
-    /**
-     * Adds a photo to a category at a specific position.
-     */
-    fun addPhotoToCategory(photo: Photo, category: Category, position: Int? = null) {
-        category.addPhoto(photo, position)
+    fun removePhotoFromCategory(photo: Photo, category: Category): Category {
+        val index = categories.indexOfFirst { it.id == category.id }
+        if (index == -1) return category
+
+        val currentCategory = categories[index]
+        val updatedCategory = currentCategory.copy(
+            photos = currentCategory.photos.filter { it != photo }
+        )
+        categories[index] = updatedCategory
+        return updatedCategory
     }
 
-    /**
-     * Removes a photo from a category.
-     */
-    fun removePhotoFromCategory(photo: Photo, category: Category) {
-        category.removePhoto(photo)
+    fun reorderPhotoInCategory(photoId: String, category: Category, newPosition: Int): Boolean {
+        val index = categories.indexOfFirst { it.id == category.id }
+        if (index == -1) return false
+
+        val currentCategory = categories[index]
+        val photos = currentCategory.photos.toMutableList()
+        val currentIndex = photos.indexOfFirst { it.id == photoId }
+        
+        if (currentIndex == -1) return false
+        if (newPosition < 0 || newPosition > photos.size) return false
+        if (currentIndex == newPosition) return true
+
+        val photo = photos.removeAt(currentIndex)
+        val adjustedPosition = if (newPosition > currentIndex) newPosition - 1 else newPosition
+        photos.add(adjustedPosition.coerceIn(0, photos.size), photo)
+        
+        categories[index] = currentCategory.copy(photos = photos)
+        return true
     }
 
-    /**
-     * Reorders a photo within a category to a new position.
-     */
-    fun reorderPhotoInCategory(photo: Photo, category: Category, newPosition: Int): Boolean {
-        return category.reorderPhoto(photo, newPosition)
-    }
-
-    /**
-     * Finds which category contains a photo, if any.
-     */
     fun findCategoryContainingPhoto(photo: Photo): Category? {
         return categories.find { it.containsPhoto(photo) }
     }
 
-    /**
-     * Finds a photo by ID across all categories.
-     */
     fun findPhotoById(photoId: String): Photo? {
         categories.forEach { category ->
             val photo = category.photos.find { it.id == photoId }
@@ -66,24 +82,21 @@ class CategoryService {
         return null
     }
 
-    /**
-     * Gets a category by its ID.
-     */
     fun getCategoryById(categoryId: String): Category? {
         return categories.find { it.id == categoryId }
     }
 
-    /**
-     * Clears all categories.
-     */
     fun clearCategories() {
         categories.clear()
     }
 
-    /**
-     * Gets the count of categories.
-     */
-    fun getCategoryCount(): Int {
-        return categories.size
+    fun getCategoryCount(): Int = categories.size
+    
+    fun updateCategory(category: Category): Category {
+        val index = categories.indexOfFirst { it.id == category.id }
+        if (index != -1) {
+            categories[index] = category
+        }
+        return category
     }
 }

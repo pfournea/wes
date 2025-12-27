@@ -64,9 +64,9 @@ class CategoryServiceTest {
 
         @Test
         fun `should add photo to category`() {
-            val category = categoryService.createCategory()
+            var category = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo1, category)
             
             assertTrue(category.containsPhoto(photo1))
             assertEquals(1, category.photos.size)
@@ -74,12 +74,11 @@ class CategoryServiceTest {
 
         @Test
         fun `should add photo to category at specific position`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
             
-            // Insert photo3 at position 1 (between photo1 and photo2)
-            categoryService.addPhotoToCategory(photo3, category, position = 1)
+            category = categoryService.addPhotoToCategory(photo3, category, position = 1)
             
             assertEquals(3, category.photos.size)
             assertEquals(photo1, category.photos[0])
@@ -89,11 +88,11 @@ class CategoryServiceTest {
 
         @Test
         fun `should add photo at end when position is null`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
             
-            categoryService.addPhotoToCategory(photo3, category, position = null)
+            category = categoryService.addPhotoToCategory(photo3, category, position = null)
             
             assertEquals(3, category.photos.size)
             assertEquals(photo3, category.photos[2])
@@ -101,11 +100,11 @@ class CategoryServiceTest {
 
         @Test
         fun `should remove photo from category`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
             
-            categoryService.removePhotoFromCategory(photo1, category)
+            category = categoryService.removePhotoFromCategory(photo1, category)
             
             assertFalse(category.containsPhoto(photo1))
             assertTrue(category.containsPhoto(photo2))
@@ -114,11 +113,10 @@ class CategoryServiceTest {
 
         @Test
         fun `should handle removing non-existent photo`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
             
-            // Should not throw exception
-            categoryService.removePhotoFromCategory(photo2, category)
+            category = categoryService.removePhotoFromCategory(photo2, category)
             
             assertEquals(1, category.photos.size)
         }
@@ -130,11 +128,11 @@ class CategoryServiceTest {
 
         @Test
         fun `should find category containing photo`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo2, category2)
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
+            category2 = categoryService.addPhotoToCategory(photo2, category2)
             
             val foundCategory = categoryService.findCategoryContainingPhoto(photo2)
             
@@ -144,8 +142,8 @@ class CategoryServiceTest {
 
         @Test
         fun `should return null when photo is not in any category`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
             
             val foundCategory = categoryService.findCategoryContainingPhoto(photo2)
             
@@ -154,7 +152,7 @@ class CategoryServiceTest {
 
         @Test
         fun `should get category by id`() {
-            val category1 = categoryService.createCategory()
+            categoryService.createCategory()
             val category2 = categoryService.createCategory()
             
             val found = categoryService.getCategoryById("category_2")
@@ -181,9 +179,9 @@ class CategoryServiceTest {
             val allCategories = categoryService.getCategories()
             
             assertEquals(3, allCategories.size)
-            assertTrue(allCategories.contains(category1))
-            assertTrue(allCategories.contains(category2))
-            assertTrue(allCategories.contains(category3))
+            assertTrue(allCategories.any { it.id == category1.id })
+            assertTrue(allCategories.any { it.id == category2.id })
+            assertTrue(allCategories.any { it.id == category3.id })
         }
     }
 
@@ -231,16 +229,14 @@ class CategoryServiceTest {
 
         @Test
         fun `should move photo between categories`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            // Add photo to category1
-            categoryService.addPhotoToCategory(photo1, category1)
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
             assertTrue(category1.containsPhoto(photo1))
             
-            // Move to category2
-            categoryService.removePhotoFromCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo1, category2)
+            category1 = categoryService.removePhotoFromCategory(photo1, category1)
+            category2 = categoryService.addPhotoToCategory(photo1, category2)
             
             assertFalse(category1.containsPhoto(photo1))
             assertTrue(category2.containsPhoto(photo1))
@@ -248,28 +244,28 @@ class CategoryServiceTest {
 
         @Test
         fun `should handle multiple photos in multiple categories`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo2, category1)
-            categoryService.addPhotoToCategory(photo3, category2)
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
+            category1 = categoryService.addPhotoToCategory(photo2, category1)
+            category2 = categoryService.addPhotoToCategory(photo3, category2)
             
             assertEquals(2, category1.photos.size)
             assertEquals(1, category2.photos.size)
             
-            assertEquals(category1, categoryService.findCategoryContainingPhoto(photo1))
-            assertEquals(category1, categoryService.findCategoryContainingPhoto(photo2))
-            assertEquals(category2, categoryService.findCategoryContainingPhoto(photo3))
+            assertEquals(category1.id, categoryService.findCategoryContainingPhoto(photo1)?.id)
+            assertEquals(category1.id, categoryService.findCategoryContainingPhoto(photo2)?.id)
+            assertEquals(category2.id, categoryService.findCategoryContainingPhoto(photo3)?.id)
         }
 
         @Test
         fun `should maintain photo order in category`() {
-            val category = categoryService.createCategory()
+            var category = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
-            categoryService.addPhotoToCategory(photo3, category)
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
+            category = categoryService.addPhotoToCategory(photo3, category)
             
             assertEquals(photo1, category.photos[0])
             assertEquals(photo2, category.photos[1])
@@ -278,12 +274,11 @@ class CategoryServiceTest {
 
         @Test
         fun `should handle adding same photo to category multiple times`() {
-            val category = categoryService.createCategory()
+            var category = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo1, category)
             
-            // Should allow duplicates (list behavior)
             assertEquals(2, category.photos.size)
         }
     }
@@ -294,12 +289,13 @@ class CategoryServiceTest {
 
         @Test
         fun `should reorder photo to new position`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
-            categoryService.addPhotoToCategory(photo3, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
+            category = categoryService.addPhotoToCategory(photo3, category)
 
-            val result = categoryService.reorderPhotoInCategory(photo3, category, 0)
+            val result = categoryService.reorderPhotoInCategory(photo3.id, category, 0)
+            category = categoryService.getCategoryById(category.id)!!
 
             assertTrue(result)
             assertEquals(photo3, category.photos[0])
@@ -309,12 +305,13 @@ class CategoryServiceTest {
 
         @Test
         fun `should reorder photo from first to last position`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
-            categoryService.addPhotoToCategory(photo3, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
+            category = categoryService.addPhotoToCategory(photo3, category)
 
-            val result = categoryService.reorderPhotoInCategory(photo1, category, 3)
+            val result = categoryService.reorderPhotoInCategory(photo1.id, category, 3)
+            category = categoryService.getCategoryById(category.id)!!
 
             assertTrue(result)
             assertEquals(photo2, category.photos[0])
@@ -324,31 +321,32 @@ class CategoryServiceTest {
 
         @Test
         fun `should return false for photo not in category`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
 
-            val result = categoryService.reorderPhotoInCategory(photo2, category, 0)
+            val result = categoryService.reorderPhotoInCategory(photo2.id, category, 0)
 
             assertFalse(result)
         }
 
         @Test
         fun `should return false for invalid position`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
 
-            val result = categoryService.reorderPhotoInCategory(photo1, category, -1)
+            val result = categoryService.reorderPhotoInCategory(photo1.id, category, -1)
 
             assertFalse(result)
         }
 
         @Test
         fun `should return true when photo already at target position`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
 
-            val result = categoryService.reorderPhotoInCategory(photo1, category, 0)
+            val result = categoryService.reorderPhotoInCategory(photo1.id, category, 0)
+            category = categoryService.getCategoryById(category.id)!!
 
             assertTrue(result)
             assertEquals(photo1, category.photos[0])
@@ -357,18 +355,17 @@ class CategoryServiceTest {
 
         @Test
         fun `should preserve originalIndex after reordering`() {
-            val category = categoryService.createCategory()
-            categoryService.addPhotoToCategory(photo1, category)
-            categoryService.addPhotoToCategory(photo2, category)
-            categoryService.addPhotoToCategory(photo3, category)
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
+            category = categoryService.addPhotoToCategory(photo3, category)
 
-            categoryService.reorderPhotoInCategory(photo3, category, 0)
+            categoryService.reorderPhotoInCategory(photo3.id, category, 0)
+            category = categoryService.getCategoryById(category.id)!!
 
-            // After reorder: [photo3, photo1, photo2]
-            // originalIndex values should remain unchanged
-            assertEquals(2, category.photos[0].originalIndex) // photo3 still has originalIndex=2
-            assertEquals(0, category.photos[1].originalIndex) // photo1 still has originalIndex=0
-            assertEquals(1, category.photos[2].originalIndex) // photo2 still has originalIndex=1
+            assertEquals(2, category.photos[0].originalIndex)
+            assertEquals(0, category.photos[1].originalIndex)
+            assertEquals(1, category.photos[2].originalIndex)
         }
     }
 
@@ -378,14 +375,14 @@ class CategoryServiceTest {
 
         @Test
         fun `should move photo from one category to another`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo2, category1)
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
+            category1 = categoryService.addPhotoToCategory(photo2, category1)
             
-            categoryService.removePhotoFromCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo1, category2)
+            category1 = categoryService.removePhotoFromCategory(photo1, category1)
+            category2 = categoryService.addPhotoToCategory(photo1, category2)
             
             assertFalse(category1.containsPhoto(photo1))
             assertTrue(category1.containsPhoto(photo2))
@@ -396,17 +393,17 @@ class CategoryServiceTest {
 
         @Test
         fun `should move multiple photos between categories`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo2, category1)
-            categoryService.addPhotoToCategory(photo3, category1)
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
+            category1 = categoryService.addPhotoToCategory(photo2, category1)
+            category1 = categoryService.addPhotoToCategory(photo3, category1)
             
-            categoryService.removePhotoFromCategory(photo1, category1)
-            categoryService.removePhotoFromCategory(photo3, category1)
-            categoryService.addPhotoToCategory(photo1, category2)
-            categoryService.addPhotoToCategory(photo3, category2)
+            category1 = categoryService.removePhotoFromCategory(photo1, category1)
+            category1 = categoryService.removePhotoFromCategory(photo3, category1)
+            category2 = categoryService.addPhotoToCategory(photo1, category2)
+            category2 = categoryService.addPhotoToCategory(photo3, category2)
             
             assertEquals(1, category1.photos.size)
             assertEquals(2, category2.photos.size)
@@ -417,29 +414,29 @@ class CategoryServiceTest {
 
         @Test
         fun `should preserve photo originalIndex after cross-category move`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category1)
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
             
-            categoryService.removePhotoFromCategory(photo1, category1)
-            categoryService.addPhotoToCategory(photo1, category2)
+            category1 = categoryService.removePhotoFromCategory(photo1, category1)
+            category2 = categoryService.addPhotoToCategory(photo1, category2)
             
             assertEquals(0, category2.photos[0].originalIndex)
         }
 
         @Test
         fun `should find photo in new category after move`() {
-            val category1 = categoryService.createCategory()
-            val category2 = categoryService.createCategory()
+            var category1 = categoryService.createCategory()
+            var category2 = categoryService.createCategory()
             
-            categoryService.addPhotoToCategory(photo1, category1)
-            assertEquals(category1, categoryService.findCategoryContainingPhoto(photo1))
+            category1 = categoryService.addPhotoToCategory(photo1, category1)
+            assertEquals(category1.id, categoryService.findCategoryContainingPhoto(photo1)?.id)
             
             categoryService.removePhotoFromCategory(photo1, category1)
             categoryService.addPhotoToCategory(photo1, category2)
             
-            assertEquals(category2, categoryService.findCategoryContainingPhoto(photo1))
+            assertEquals(category2.id, categoryService.findCategoryContainingPhoto(photo1)?.id)
         }
     }
 }

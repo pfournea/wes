@@ -2,49 +2,14 @@ package domain.model
 
 /**
  * Represents the selection state in the photo grid.
- * Manages anchor point and selected photo IDs.
+ * This is a pure, immutable domain model.
+ * All mutations return new instances - use SelectionService for state management.
  */
 data class Selection(
-    var anchorIndex: Int? = null,
-    val selectedPhotoIds: MutableSet<String> = mutableSetOf()
+    val anchorIndex: Int? = null,
+    val selectedPhotoIds: Set<String> = emptySet()
 ) {
-    fun setAnchor(index: Int) {
-        anchorIndex = index
-    }
-
-    fun clearAnchor() {
-        anchorIndex = null
-    }
-
-    fun addSelection(photoId: String) {
-        selectedPhotoIds.add(photoId)
-    }
-
-    fun removeSelection(photoId: String) {
-        selectedPhotoIds.remove(photoId)
-    }
-
-    fun toggleSelection(photoId: String) {
-        if (selectedPhotoIds.contains(photoId)) {
-            selectedPhotoIds.remove(photoId)
-        } else {
-            selectedPhotoIds.add(photoId)
-        }
-    }
-
-    fun clearSelection() {
-        selectedPhotoIds.clear()
-    }
-
-    fun isSelected(photoId: String): Boolean {
-        return selectedPhotoIds.contains(photoId)
-    }
-
-    fun hasSelection(): Boolean {
-        return selectedPhotoIds.isNotEmpty()
-    }
-
-    fun getSelectionCount(): Int {
-        return selectedPhotoIds.size
-    }
+    fun isSelected(photoId: String): Boolean = selectedPhotoIds.contains(photoId)
+    fun hasSelection(): Boolean = selectedPhotoIds.isNotEmpty()
+    fun getSelectionCount(): Int = selectedPhotoIds.size
 }

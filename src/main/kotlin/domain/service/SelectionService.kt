@@ -1,38 +1,37 @@
 package domain.service
 
-import domain.model.Photo
 import domain.model.Selection
 
 /**
  * Service for managing photo selection logic.
- * Contains pure business logic with no UI dependencies - fully testable.
+ * Thread-safe and maintains immutable Selection state internally.
  */
 class SelectionService {
-    private val selection = Selection()
+    @Volatile
+    private var selection = Selection()
 
-    /**
-     * Handles single click selection - sets anchor and clears previous selection.
-     */
     fun handleSingleClick(photoIndex: Int, photoId: String): SelectionResult {
-        selection.clearSelection()
-        selection.setAnchor(photoIndex)
-        selection.addSelection(photoId)
+        selection = Selection(
+            anchorIndex = photoIndex,
+            selectedPhotoIds = setOf(photoId)
+        )
         return SelectionResult(setOf(photoId), photoIndex)
     }
 
-    /**
-     * Handles Ctrl+Click selection - toggles individual photo.
-     */
     fun handleCtrlClick(photoIndex: Int, photoId: String): SelectionResult {
-        selection.toggleSelection(photoId)
-        selection.setAnchor(photoIndex)
-        return SelectionResult(selection.selectedPhotoIds.toSet(), photoIndex)
+        val currentIds = selection.selectedPhotoIds
+        val newIds = if (currentIds.contains(photoId)) {
+            currentIds - photoId
+        } else {
+            currentIds + photoId
+        }
+        selection = selection.copy(
+            anchorIndex = photoIndex,
+            selectedPhotoIds = newIds
+        )
+        return SelectionResult(newIds, photoIndex)
     }
 
-    /**
-     * Handles Shift+Click selection - row-wise range from anchor to clicked.
-     * Returns indices of photos that should be selected.
-     */
     fun handleShiftClick(
         clickedIndex: Int,
         totalPhotos: Int,
@@ -63,9 +62,7 @@ class SelectionService {
                 val i = row * columns + col
                 if (i >= totalPhotos) break
 
-                // Skip photos before start column in the start row
                 if (row == startRow && col < startCol) continue
-                // Skip photos after end column in the end row
                 if (row == endRow && col > endCol) continue
 
                 selectedIndices.add(i)
@@ -75,46 +72,34 @@ class SelectionService {
         return RangeSelectionResult(selectedIndices)
     }
 
-    /**
-     * Clears all selection.
-     */
     fun clearSelection() {
-        selection.clearSelection()
+        selection = selection.copy(selectedPhotoIds = emptySet())
     }
 
-    /**
-     * Returns current selection state.
-     */
-    fun getSelection(): Selection {
-        return selection
+    fun getSelection(): Selection = selection
+
+    fun isSelected(photoId: String): Boolean = selection.isSelected(photoId)
+
+    fun getSelectedPhotoIds(): Set<String> = selection.selectedPhotoIds
+
+    fun addSelections(photoIds: Collection<String>) {
+        selection = selection.copy(
+            selectedPhotoIds = selection.selectedPhotoIds + photoIds
+        )
     }
 
-    /**
-     * Checks if a photo is currently selected.
-     */
-    fun isSelected(photoId: String): Boolean {
-        return selection.isSelected(photoId)
-    }
-
-    /**
-     * Gets all selected photo IDs.
-     */
-    fun getSelectedPhotoIds(): Set<String> {
-        return selection.selectedPhotoIds.toSet()
+    fun addSelection(photoId: String) {
+        selection = selection.copy(
+            selectedPhotoIds = selection.selectedPhotoIds + photoId
+        )
     }
 }
 
-/**
- * Result of a selection operation.
- */
 data class SelectionResult(
     val selectedPhotoIds: Set<String>,
     val anchorIndex: Int?
 )
 
-/**
- * Result of a range selection operation.
- */
 data class RangeSelectionResult(
     val selectedIndices: List<Int>
 )
