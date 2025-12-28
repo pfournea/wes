@@ -34,7 +34,9 @@ class ExportService {
             }
 
             // Delete all files in the directory
-            filesDeleted = cleanDirectory(targetDirectory)
+            val cleanResult = cleanDirectory(targetDirectory)
+            filesDeleted = cleanResult.deletedCount
+            errors.addAll(cleanResult.errors)
 
             // Export photos from each category
             for (category in categories) {
@@ -90,8 +92,9 @@ class ExportService {
      * @param directory Directory to clean
      * @return Number of files deleted
      */
-    private fun cleanDirectory(directory: Path): Int {
+    private fun cleanDirectory(directory: Path): CleanResult {
         var deletedCount = 0
+        val errors = mutableListOf<String>()
         
         try {
             Files.list(directory).use { stream ->
@@ -101,17 +104,19 @@ class ExportService {
                             Files.delete(path)
                             deletedCount++
                         } catch (e: Exception) {
-                            // Continue deleting other files
+                            errors.add("Failed to delete ${path.fileName}: ${e.message}")
                         }
                     }
                 }
             }
         } catch (e: Exception) {
-            // Directory might not exist or not be readable
+            errors.add("Failed to list directory ${directory}: ${e.message}")
         }
         
-        return deletedCount
+        return CleanResult(deletedCount, errors)
     }
+
+    private data class CleanResult(val deletedCount: Int, val errors: List<String>)
 
     /**
      * Generates filename for a photo based on category number and position.
@@ -125,7 +130,11 @@ class ExportService {
      */
     private fun generateFilename(categoryNumber: Int, position: Int, extension: String): String {
         val paddedPosition = position.toString().padStart(5, '0')
-        return "${categoryNumber}_${paddedPosition}.${extension}"
+        return if (extension.isNotEmpty()) {
+            "${categoryNumber}_${paddedPosition}.${extension}"
+        } else {
+            "${categoryNumber}_${paddedPosition}"
+        }
     }
 
     /**
@@ -139,16 +148,9 @@ class ExportService {
             return 0
         }
         
-        var count = 0
-        try {
-            Files.list(directory).use { stream ->
-                count = stream.filter { Files.isRegularFile(it) }.count().toInt()
-            }
-        } catch (e: Exception) {
-            // Directory not readable
+        return Files.list(directory).use { stream ->
+            stream.filter { Files.isRegularFile(it) }.count().toInt()
         }
-        
-        return count
     }
 }
 

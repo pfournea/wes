@@ -5,19 +5,21 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipFile
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
-/**
- * Service for handling file operations.
- * Manages zip extraction and image file validation.
- */
 class FileService {
     private val supportedExtensions = setOf("jpg", "jpeg", "png", "gif", "bmp")
+    private val tempDirectories = mutableListOf<Path>()
 
-    /**
-     * Extracts photos from a zip file and returns them in order.
-     */
     fun extractPhotosFromZip(zipFile: File): List<Photo> {
+        cleanupTempDirectories()
+        
         val tempDir = Files.createTempDirectory("photo_categorizer")
+        tempDirectories.add(tempDir)
+        
         val imageFiles = mutableListOf<Path>()
 
         ZipFile(zipFile).use { zip ->
@@ -38,18 +40,34 @@ class FileService {
         }
     }
 
-    /**
-     * Checks if a filename represents an image file.
-     */
     fun isImageFile(filename: String): Boolean {
         val extension = filename.substringAfterLast('.', "").lowercase()
         return extension in supportedExtensions
     }
 
-    /**
-     * Gets the list of supported image extensions.
-     */
     fun getSupportedExtensions(): Set<String> {
         return supportedExtensions.toSet()
+    }
+
+    fun cleanupTempDirectories() {
+        val iterator = tempDirectories.iterator()
+        while (iterator.hasNext()) {
+            val dir = iterator.next()
+            deleteDirectoryRecursively(dir)
+            iterator.remove()
+        }
+    }
+
+    fun getTempDirectoryCount(): Int = tempDirectories.size
+
+    private fun deleteDirectoryRecursively(path: Path) {
+        if (!path.exists()) return
+        
+        if (path.isDirectory()) {
+            path.listDirectoryEntries().forEach { child ->
+                deleteDirectoryRecursively(child)
+            }
+        }
+        path.deleteIfExists()
     }
 }

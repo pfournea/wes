@@ -290,4 +290,72 @@ class FileServiceTest {
             assertEquals(5, extensions.size)
         }
     }
+
+    @Nested
+    @DisplayName("Temp Directory Cleanup")
+    inner class TempDirectoryCleanupTests {
+
+        @Test
+        fun `should track temp directory after extraction`(@TempDir tempDir: Path) {
+            val zipFile = tempDir.resolve("test.zip").toFile()
+            createZipWithImages(zipFile, listOf("photo1.jpg"))
+
+            assertEquals(0, fileService.getTempDirectoryCount())
+
+            fileService.extractPhotosFromZip(zipFile)
+
+            assertEquals(1, fileService.getTempDirectoryCount())
+        }
+
+        @Test
+        fun `should cleanup previous temp directory on new extraction`(@TempDir tempDir: Path) {
+            val zipFile1 = tempDir.resolve("test1.zip").toFile()
+            val zipFile2 = tempDir.resolve("test2.zip").toFile()
+            createZipWithImages(zipFile1, listOf("photo1.jpg"))
+            createZipWithImages(zipFile2, listOf("photo2.jpg"))
+
+            fileService.extractPhotosFromZip(zipFile1)
+            assertEquals(1, fileService.getTempDirectoryCount())
+
+            fileService.extractPhotosFromZip(zipFile2)
+            assertEquals(1, fileService.getTempDirectoryCount())
+        }
+
+        @Test
+        fun `should cleanup all temp directories on explicit cleanup`(@TempDir tempDir: Path) {
+            val zipFile = tempDir.resolve("test.zip").toFile()
+            createZipWithImages(zipFile, listOf("photo1.jpg"))
+
+            fileService.extractPhotosFromZip(zipFile)
+            assertEquals(1, fileService.getTempDirectoryCount())
+
+            fileService.cleanupTempDirectories()
+            assertEquals(0, fileService.getTempDirectoryCount())
+        }
+
+        @Test
+        fun `cleanup should handle already deleted directories gracefully`(@TempDir tempDir: Path) {
+            val zipFile = tempDir.resolve("test.zip").toFile()
+            createZipWithImages(zipFile, listOf("photo1.jpg"))
+
+            fileService.extractPhotosFromZip(zipFile)
+            fileService.cleanupTempDirectories()
+            
+            assertDoesNotThrow {
+                fileService.cleanupTempDirectories()
+            }
+            assertEquals(0, fileService.getTempDirectoryCount())
+        }
+
+        private fun createZipWithImages(zipFile: File, imageNames: List<String>) {
+            ZipOutputStream(zipFile.outputStream()).use { zos ->
+                imageNames.forEach { name ->
+                    val entry = ZipEntry(name)
+                    zos.putNextEntry(entry)
+                    zos.write("fake image data".toByteArray())
+                    zos.closeEntry()
+                }
+            }
+        }
+    }
 }

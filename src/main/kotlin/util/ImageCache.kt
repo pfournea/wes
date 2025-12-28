@@ -6,9 +6,21 @@ import java.nio.file.Path
 /**
  * Singleton cache for Image objects to avoid redundant loading.
  * Images are cached by path and requested width to support different sizes.
+ * Uses LRU eviction to prevent unbounded memory growth.
  */
 object ImageCache {
-    private val cache = mutableMapOf<String, Image>()
+    /**
+     * Maximum number of images to cache. When exceeded, oldest entries are evicted.
+     * Default of 500 images at ~200KB each ≈ 100MB max memory usage.
+     */
+    private const val MAX_CACHE_SIZE = 500
+
+    // LinkedHashMap with accessOrder=true provides LRU ordering
+    private val cache = object : LinkedHashMap<String, Image>(MAX_CACHE_SIZE, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Image>?): Boolean {
+            return size > MAX_CACHE_SIZE
+        }
+    }
 
     /**
      * Gets a cached image or loads it with optimal settings.
@@ -37,4 +49,6 @@ object ImageCache {
     fun clear() {
         cache.clear()
     }
+
+    fun size(): Int = cache.size
 }
