@@ -10,10 +10,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class CategoryService {
     private val categories = CopyOnWriteArrayList<Category>()
+    private var nextCategoryNumber = 1
 
     fun createCategory(): Category {
-        val nextNumber = categories.size + 1
-        val category = Category.create(nextNumber)
+        val category = Category.create(nextCategoryNumber)
+        nextCategoryNumber++
         categories.add(category)
         return category
     }
@@ -88,9 +89,24 @@ class CategoryService {
 
     fun clearCategories() {
         categories.clear()
+        nextCategoryNumber = 1
     }
 
     fun getCategoryCount(): Int = categories.size
+
+    fun removeCategory(categoryId: String): Boolean {
+        val index = categories.indexOfFirst { it.id == categoryId }
+        if (index == -1) return false
+        categories.removeAt(index)
+        return true
+    }
+
+    fun removeCategoryAndReturnPhotos(categoryId: String): List<Photo> {
+        val index = categories.indexOfFirst { it.id == categoryId }
+        if (index == -1) return emptyList()
+        val category = categories.removeAt(index)
+        return category.photos.toList()
+    }
     
     fun updateCategory(category: Category): Category {
         val index = categories.indexOfFirst { it.id == category.id }

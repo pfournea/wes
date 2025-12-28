@@ -22,10 +22,12 @@ import util.StyleConstants
  * - Selection visual feedback (blue border + background)
  */
 class CategoryCard(
-    private val category: Category,
+    category: Category,
     private val onDeleteRequested: () -> Unit = {},
     private val onSelectionChanged: (Boolean) -> Unit = {}
 ) : VBox() {
+
+    private var category: Category = category
 
     private val nameLabel = Label(category.name)
     private val selectButton = Button("👁")
@@ -249,5 +251,13 @@ class CategoryCard(
      */
     fun getCategory(): Category {
         return category
+    }
+
+    /**
+     * Updates the category reference and refreshes the display.
+     */
+    fun updateCategory(newCategory: Category) {
+        category = newCategory
+        updatePhotoCount()
     }
 }

@@ -439,4 +439,131 @@ class CategoryServiceTest {
             assertEquals(category2.id, categoryService.findCategoryContainingPhoto(photo1)?.id)
         }
     }
+
+    @Nested
+    @DisplayName("Category Removal")
+    inner class CategoryRemovalTests {
+
+        @Test
+        fun `should remove category by id`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            
+            val removed = categoryService.removeCategory(category1.id)
+            
+            assertTrue(removed)
+            assertEquals(1, categoryService.getCategoryCount())
+            assertNull(categoryService.getCategoryById(category1.id))
+            assertNotNull(categoryService.getCategoryById(category2.id))
+        }
+
+        @Test
+        fun `should return false when removing non-existent category`() {
+            categoryService.createCategory()
+            
+            val removed = categoryService.removeCategory("nonexistent_id")
+            
+            assertFalse(removed)
+            assertEquals(1, categoryService.getCategoryCount())
+        }
+
+        @Test
+        fun `should not include removed category in getCategories`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            val category3 = categoryService.createCategory()
+            
+            categoryService.removeCategory(category2.id)
+            
+            val categories = categoryService.getCategories()
+            assertEquals(2, categories.size)
+            assertTrue(categories.any { it.id == category1.id })
+            assertFalse(categories.any { it.id == category2.id })
+            assertTrue(categories.any { it.id == category3.id })
+        }
+
+        @Test
+        fun `should return photos from removed category`() {
+            var category = categoryService.createCategory()
+            category = categoryService.addPhotoToCategory(photo1, category)
+            category = categoryService.addPhotoToCategory(photo2, category)
+            
+            val returnedPhotos = categoryService.removeCategoryAndReturnPhotos(category.id)
+            
+            assertEquals(2, returnedPhotos.size)
+            assertTrue(returnedPhotos.contains(photo1))
+            assertTrue(returnedPhotos.contains(photo2))
+            assertNull(categoryService.getCategoryById(category.id))
+        }
+
+        @Test
+        fun `should return empty list when removing empty category`() {
+            val category = categoryService.createCategory()
+            
+            val returnedPhotos = categoryService.removeCategoryAndReturnPhotos(category.id)
+            
+            assertTrue(returnedPhotos.isEmpty())
+            assertNull(categoryService.getCategoryById(category.id))
+        }
+
+        @Test
+        fun `should return empty list when removing non-existent category`() {
+            val returnedPhotos = categoryService.removeCategoryAndReturnPhotos("nonexistent_id")
+            
+            assertTrue(returnedPhotos.isEmpty())
+        }
+    }
+
+    @Nested
+    @DisplayName("Category Numbering After Deletion")
+    inner class CategoryNumberingTests {
+
+        @Test
+        fun `should not create duplicate category numbers after deletion`() {
+            val category1 = categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            val category3 = categoryService.createCategory()
+            
+            categoryService.removeCategory(category2.id)
+            
+            val category4 = categoryService.createCategory()
+            
+            val allNames = categoryService.getCategories().map { it.name }
+            val uniqueNames = allNames.toSet()
+            assertEquals(allNames.size, uniqueNames.size)
+        }
+
+        @Test
+        fun `should assign unique number to new category after deletion`() {
+            categoryService.createCategory()
+            val category2 = categoryService.createCategory()
+            categoryService.createCategory()
+            
+            categoryService.removeCategory(category2.id)
+            val newCategory = categoryService.createCategory()
+            
+            assertNotEquals("category_2", newCategory.id)
+            assertNotEquals("category_3", newCategory.id)
+            assertEquals("category_4", newCategory.id)
+        }
+
+        @Test
+        fun `should handle multiple deletions and creations`() {
+            val cat1 = categoryService.createCategory()
+            val cat2 = categoryService.createCategory()
+            val cat3 = categoryService.createCategory()
+            
+            categoryService.removeCategory(cat1.id)
+            categoryService.removeCategory(cat3.id)
+            
+            val cat4 = categoryService.createCategory()
+            val cat5 = categoryService.createCategory()
+            
+            assertEquals(3, categoryService.getCategoryCount())
+            
+            val allIds = categoryService.getCategories().map { it.id }
+            val uniqueIds = allIds.toSet()
+            assertEquals(allIds.size, uniqueIds.size)
+        }
+    }
 }

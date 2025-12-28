@@ -226,9 +226,12 @@ class PhotoCategorizerApp : Application() {
             val currentCategory = categoryService.getCategoryById(category.id) ?: category
             val success = dragDropHandler.handleDragDropped(event, currentCategory, categoryCard.getPhotoContainer())
             if (success) {
-                categoryCard.updatePhotoCount()
+                val updatedCategory = categoryService.getCategoryById(category.id)
+                if (updatedCategory != null) {
+                    categoryCard.updateCategory(updatedCategory)
+                }
                 if (selectedCategory?.id == category.id) {
-                    selectedCategory = categoryService.getCategoryById(category.id)
+                    selectedCategory = updatedCategory
                     updateMainGridForCategory(selectedCategory)
                 }
             }
@@ -327,9 +330,9 @@ class PhotoCategorizerApp : Application() {
             it is ui.component.CategoryCard && it.getCategory().id == category.id
         }
         
-        val currentCategory = categoryService.getCategoryById(category.id)
-        if (currentCategory != null && currentCategory.photos.isNotEmpty()) {
-            photoService.restorePhotos(currentCategory.photos.toList())
+        val returnedPhotos = categoryService.removeCategoryAndReturnPhotos(category.id)
+        if (returnedPhotos.isNotEmpty()) {
+            photoService.restorePhotos(returnedPhotos)
         }
         
         updateMainGridForCategory(selectedCategory)
