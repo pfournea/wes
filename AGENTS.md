@@ -91,3 +91,6 @@ Export → ExportService.exportCategories() → copies to category subdirs
 - **Dual photo existence**: Photos in PhotoService (grid) AND CategoryService (organization)
 - **Destructive export**: ExportService clears target dirs before writing
 - **Photo ID format**: `${originalIndex}_${filename}` for uniqueness
+
+## CRITICAL
+- **Don't use git to update / delete / add files.
