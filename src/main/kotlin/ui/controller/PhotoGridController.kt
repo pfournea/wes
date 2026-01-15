@@ -1,11 +1,15 @@
 package ui.controller
 
 import domain.model.Category
+import domain.model.Photo
 import domain.service.CategoryService
 import domain.service.PhotoService
+import javafx.scene.control.Alert
+import javafx.scene.control.ButtonType
 import javafx.scene.control.Label
 import javafx.scene.image.ImageView
 import javafx.scene.layout.TilePane
+import ui.component.PhotoCard
 import ui.handler.DragDropHandler
 import ui.handler.ReorderDragDropHandler
 import ui.handler.SelectionHandler
@@ -19,12 +23,18 @@ class PhotoGridController(
     private val imageViews: MutableList<ImageView>,
     private val dragDropHandler: DragDropHandler,
     private val reorderDragDropHandler: ReorderDragDropHandler,
-    private val selectionHandler: SelectionHandler
+    private val selectionHandler: SelectionHandler,
+    private val onPhotoRemoved: (Category) -> Unit = {}
 ) {
+    private var currentCategory: Category? = null
+    private val photoCards = mutableMapOf<ImageView, PhotoCard>()
+
     fun getImageViews(): MutableList<ImageView> = imageViews
 
     fun updateForCategory(category: Category?) {
         imageViews.clear()
+        photoCards.clear()
+        currentCategory = category
 
         val latestCategory = category?.let { categoryService.getCategoryById(it.id) }
 
@@ -50,8 +60,21 @@ class PhotoGridController(
             }
 
             if (latestCategory != null) {
+                val photoCard = PhotoCard(
+                    imageView = imageView,
+                    photo = photo,
+                    onDeleteRequested = { handlePhotoDelete(photo, latestCategory) },
+                    isInCategory = true
+                )
+                photoCards[imageView] = photoCard
                 setupCategoryViewDragHandlers(imageView)
             } else {
+                val photoCard = PhotoCard(
+                    imageView = imageView,
+                    photo = photo,
+                    isInCategory = false
+                )
+                photoCards[imageView] = photoCard
                 setupImageViewHandlers(imageView)
             }
 
@@ -79,6 +102,29 @@ class PhotoGridController(
         updateImageDisplay()
     }
 
+    private fun handlePhotoDelete(photo: Photo, category: Category) {
+        // Show confirmation dialog
+        val alert = Alert(Alert.AlertType.CONFIRMATION)
+        alert.title = "Remove Photo"
+        alert.headerText = "Remove \"${photo.fileName}\"?"
+        alert.contentText = "This photo will be removed from the category and returned to the main grid."
+
+        val result = alert.showAndWait()
+        if (result.isPresent && result.get() == ButtonType.OK) {
+            // Remove photo from category
+            val updatedCategory = categoryService.removePhotoFromCategory(photo, category)
+            
+            // Restore photo to main grid
+            photoService.restorePhotos(listOf(photo))
+            
+            // Refresh the category view
+            updateForCategory(updatedCategory)
+            
+            // Notify about the removal so CategoryController can refresh
+            onPhotoRemoved(updatedCategory)
+        }
+    }
+
     fun setupImageViewHandlers(imageView: ImageView) {
         imageView.setOnMouseClicked { event ->
             selectionHandler.handleImageClick(event, imageView)
@@ -102,7 +148,13 @@ class PhotoGridController(
 
     fun updateImageDisplay() {
         imageContainer.children.clear()
-        imageContainer.children.addAll(imageViews)
+        // Add PhotoCard containers which wrap ImageViews with delete button
+        imageContainer.children.addAll(photoCards.values.map { it.container })
         selectionHandler.updateVisualSelection()
     }
+
+    /**
+     * Gets the PhotoCard for an ImageView
+     */
+    fun getPhotoCard(imageView: ImageView): PhotoCard? = photoCards[imageView]
 }

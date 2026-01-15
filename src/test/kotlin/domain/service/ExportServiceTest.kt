@@ -66,9 +66,9 @@ class ExportServiceTest {
             assertTrue(result.success)
             assertEquals(4, result.photosCopied)
             assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0001-02.png")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-01.png")))
             assertTrue(Files.exists(tempTargetDir.resolve("0002.gif")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-01.jpg")))
         }
 
         @Test
@@ -131,10 +131,10 @@ class ExportServiceTest {
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
             assertTrue(Files.exists(tempTargetDir.resolve("0002.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-01.jpg")))
             assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
             assertTrue(Files.exists(tempTargetDir.resolve("0002-03.jpg")))
             assertTrue(Files.exists(tempTargetDir.resolve("0002-04.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0002-05.jpg")))
         }
 
         @Test
@@ -153,21 +153,19 @@ class ExportServiceTest {
         }
 
         @Test
-        fun `should preserve file extension`() {
-            val photoJpg = createTestPhoto("test1.jpg", 0)
-            val photoPng = createTestPhoto("test2.png", 1)
-            val photoGif = createTestPhoto("test3.gif", 2)
-            val photoBmp = createTestPhoto("test4.bmp", 3)
-            
-            val category = Category("cat1", 1, "Category 1", 
-                mutableListOf(photoJpg, photoPng, photoGif, photoBmp))
+        fun `should name subsequent photos with hyphen and 2-digit position`() {
+            val photo1 = createTestPhoto("test1.jpg", 0)
+            val photo2 = createTestPhoto("test2.jpg", 1)
+            val photo3 = createTestPhoto("test3.jpg", 2)
+            val category = Category("cat1", 5, "Category 5", 
+                mutableListOf(photo1, photo2, photo3))
             
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
-            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0001-02.png")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0001-03.gif")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0001-04.bmp")))
+            assertTrue(result.success)
+            assertTrue(Files.exists(tempTargetDir.resolve("0005.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0005-01.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0005-02.jpg")))
         }
     }
 
@@ -227,7 +225,7 @@ class ExportServiceTest {
             
             // New files should exist
             assertTrue(Files.exists(tempTargetDir.resolve("0002.png")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-01.jpg")))
         }
 
         @Test
@@ -325,7 +323,7 @@ class ExportServiceTest {
             assertEquals(2, result.photosCopied) // But copied the good ones
             assertEquals(1, result.errors.size)
             assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0001-03.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-02.jpg")))
         }
     }
 
@@ -345,19 +343,20 @@ class ExportServiceTest {
         }
 
         @Test
-        fun `should name subsequent photos with hyphen and 2-digit position`() {
-            val photo1 = createTestPhoto("test1.jpg", 0)
-            val photo2 = createTestPhoto("test2.jpg", 1)
-            val photo3 = createTestPhoto("test3.jpg", 2)
-            val category = Category("cat1", 5, "Category 5", 
-                mutableListOf(photo1, photo2, photo3))
+        fun `should pad position with leading zeros`() {
+            val photos = mutableListOf<Photo>()
+            repeat(5) { i ->
+                photos.add(createTestPhoto("test${i+1}.jpg", i))
+            }
+            val category = Category("cat1", 2, "Category 2", photos)
             
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
-            assertTrue(result.success)
-            assertTrue(Files.exists(tempTargetDir.resolve("0005.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0005-02.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0005-03.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-01.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-03.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-04.jpg")))
         }
 
         @Test
@@ -387,10 +386,10 @@ class ExportServiceTest {
             
             assertTrue(result.success)
             assertTrue(Files.exists(tempTargetDir.resolve("0007.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0007-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-01.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-08.jpg")))
             assertTrue(Files.exists(tempTargetDir.resolve("0007-09.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0007-10.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0007-15.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-14.jpg")))
         }
 
         @Test

@@ -141,7 +141,11 @@ class PhotoCategorizerApp : Application() {
             sharedImageViews,
             dragDropHandler,
             reorderDragDropHandler,
-            selectionHandler
+            selectionHandler,
+            onPhotoRemoved = { updatedCategory ->
+                categoryController.updateCategoryCard(updatedCategory.id)
+                photoGridController.updateForCategory(categoryController.getSelectedCategory())
+            }
         )
 
         categoryController = CategoryController(
