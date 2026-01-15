@@ -120,20 +120,31 @@ class ExportService {
 
     /**
      * Generates filename for a photo based on category number and position.
-     * Format: <category_number>_<position_5digits>.<extension>
-     * Example: 3_00005.jpg
+     * Format: 
+     * - First photo: <category_4digits>.<extension> (e.g., 0005.jpg)
+     * - Other photos: <category_4digits>-<position_2digits>.<extension> (e.g., 0005-02.jpg)
      * 
-     * @param categoryNumber Category number
-     * @param position Position in category (1-based)
+     * @param categoryNumber Category number (1-9999)
+     * @param position Position in category (1-based, 1-99)
      * @param extension File extension
      * @return Generated filename
      */
     private fun generateFilename(categoryNumber: Int, position: Int, extension: String): String {
-        val paddedPosition = position.toString().padStart(5, '0')
-        return if (extension.isNotEmpty()) {
-            "${categoryNumber}_${paddedPosition}.${extension}"
+        val paddedCategory = categoryNumber.toString().padStart(4, '0')
+        
+        val filename = if (position == 1) {
+            // First photo: 0005.jpg
+            paddedCategory
         } else {
-            "${categoryNumber}_${paddedPosition}"
+            // Subsequent photos: 0005-02.jpg
+            val paddedPhotoNumber = position.toString().padStart(2, '0')
+            "${paddedCategory}-${paddedPhotoNumber}"
+        }
+        
+        return if (extension.isNotEmpty()) {
+            "${filename}.${extension}"
+        } else {
+            filename
         }
     }
 

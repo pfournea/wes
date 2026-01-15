@@ -48,7 +48,7 @@ class ExportServiceTest {
             
             assertTrue(result.success)
             assertEquals(1, result.photosCopied)
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
         }
 
         @Test
@@ -65,10 +65,10 @@ class ExportServiceTest {
             
             assertTrue(result.success)
             assertEquals(4, result.photosCopied)
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00002.png")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00001.gif")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00002.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-02.png")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002.gif")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
         }
 
         @Test
@@ -81,8 +81,8 @@ class ExportServiceTest {
             
             assertTrue(result.success)
             assertEquals(1, result.photosCopied)
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
-            assertFalse(Files.exists(tempTargetDir.resolve("2_00001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
+            assertFalse(Files.exists(tempTargetDir.resolve("0002.jpg")))
         }
 
         @Test
@@ -105,7 +105,7 @@ class ExportServiceTest {
             
             assertTrue(result.success)
             assertTrue(Files.exists(nonExistentDir))
-            assertTrue(Files.exists(nonExistentDir.resolve("1_00001.jpg")))
+            assertTrue(Files.exists(nonExistentDir.resolve("0001.jpg")))
         }
     }
 
@@ -120,7 +120,7 @@ class ExportServiceTest {
             
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
-            assertTrue(Files.exists(tempTargetDir.resolve("3_00001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0003.jpg")))
         }
 
         @Test
@@ -130,11 +130,11 @@ class ExportServiceTest {
             
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00002.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00003.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00004.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00005.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-03.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-04.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-05.jpg")))
         }
 
         @Test
@@ -142,14 +142,14 @@ class ExportServiceTest {
             // Create category with photo at position 12345
             val photos = mutableListOf<Photo>()
             // We'll just add one photo and verify it gets position 1
-            // but the padding should handle 5 digits
+            // but the padding should handle 4 digits for category
             val photo = createTestPhoto("test.jpg", 0)
             val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
             
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
-            // Position 1 should be padded to 00001
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
+            // Position 1 should be just category number: 0001
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
         }
 
         @Test
@@ -164,10 +164,10 @@ class ExportServiceTest {
             
             val result = exportService.exportCategories(listOf(category), tempTargetDir)
             
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00002.png")))
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00003.gif")))
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00004.bmp")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-02.png")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-03.gif")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-04.bmp")))
         }
     }
 
@@ -199,7 +199,7 @@ class ExportServiceTest {
             assertFalse(Files.exists(tempTargetDir.resolve("random.dat")))
             
             // New file should exist
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
         }
 
         @Test
@@ -223,11 +223,11 @@ class ExportServiceTest {
             assertEquals(2, result2.photosCopied)
             
             // Old file should be gone
-            assertFalse(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
+            assertFalse(Files.exists(tempTargetDir.resolve("0001.jpg")))
             
             // New files should exist
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00001.png")))
-            assertTrue(Files.exists(tempTargetDir.resolve("2_00002.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002.png")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0002-02.jpg")))
         }
 
         @Test
@@ -324,8 +324,91 @@ class ExportServiceTest {
             assertFalse(result.success) // Has errors
             assertEquals(2, result.photosCopied) // But copied the good ones
             assertEquals(1, result.errors.size)
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00001.jpg")))
-            assertTrue(Files.exists(tempTargetDir.resolve("1_00003.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-03.jpg")))
+        }
+    }
+
+    @Nested
+    @DisplayName("New Naming Format Tests")
+    inner class NewNamingFormatTests {
+
+        @Test
+        fun `should name first photo without hyphen or position`() {
+            val photo = createTestPhoto("test1.jpg", 0)
+            val category = Category("cat1", 5, "Category 5", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            assertTrue(Files.exists(tempTargetDir.resolve("0005.jpg")))
+        }
+
+        @Test
+        fun `should name subsequent photos with hyphen and 2-digit position`() {
+            val photo1 = createTestPhoto("test1.jpg", 0)
+            val photo2 = createTestPhoto("test2.jpg", 1)
+            val photo3 = createTestPhoto("test3.jpg", 2)
+            val category = Category("cat1", 5, "Category 5", 
+                mutableListOf(photo1, photo2, photo3))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            assertTrue(Files.exists(tempTargetDir.resolve("0005.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0005-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0005-03.jpg")))
+        }
+
+        @Test
+        fun `should use 4-digit category padding for all categories`() {
+            val photo1 = createTestPhoto("test1.jpg", 0)
+            val photo2 = createTestPhoto("test2.jpg", 1)
+            val photo3 = createTestPhoto("test3.jpg", 2)
+            
+            val cat1 = Category("cat1", 1, "Category 1", mutableListOf(photo1))
+            val cat11 = Category("cat11", 11, "Category 11", mutableListOf(photo2))
+            val cat123 = Category("cat123", 123, "Category 123", mutableListOf(photo3))
+            
+            val result = exportService.exportCategories(listOf(cat1, cat11, cat123), tempTargetDir)
+            
+            assertTrue(result.success)
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0011.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0123.jpg")))
+        }
+
+        @Test
+        fun `should handle double-digit photo positions correctly`() {
+            val photos = (0..14).map { createTestPhoto("test$it.jpg", it) }.toMutableList()
+            val category = Category("cat1", 7, "Category 7", photos)
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            assertTrue(Files.exists(tempTargetDir.resolve("0007.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-09.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-10.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0007-15.jpg")))
+        }
+
+        @Test
+        fun `should use hyphens not underscores in filenames`() {
+            val photo1 = createTestPhoto("test1.jpg", 0)
+            val photo2 = createTestPhoto("test2.jpg", 1)
+            val category = Category("cat1", 5, "Category 5", mutableListOf(photo1, photo2))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            // Verify no underscores exist in exported filenames
+            Files.list(tempTargetDir).use { stream ->
+                stream.forEach { path ->
+                    assertFalse(path.fileName.toString().contains("_"), 
+                        "Filename should not contain underscores: ${path.fileName}")
+                }
+            }
         }
     }
 }
