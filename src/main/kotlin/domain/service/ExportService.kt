@@ -122,7 +122,7 @@ class ExportService {
      * Generates filename for a photo based on category number and position.
      * Format: 
      * - First photo: <category_4digits>.<extension> (e.g., 0005.jpg)
-     * - Other photos: <category_4digits>-<position_2digits>.<extension> (e.g., 0005-02.jpg)
+     * - Other photos: <category_4digits>-<position_2digits>.<extension> (e.g., 0005-01.jpg)
      * 
      * @param categoryNumber Category number (1-9999)
      * @param position Position in category (1-based, 1-99)
@@ -136,9 +136,9 @@ class ExportService {
             // First photo: 0005.jpg
             paddedCategory
         } else {
-            // Subsequent photos: 0005-02.jpg
-            val paddedPhotoNumber = position.toString().padStart(2, '0')
-            "${paddedCategory}-${paddedPhotoNumber}"
+            // Subsequent photos: 0005-01.jpg, 0005-02.jpg, etc.
+            val paddedPosition = (position - 1).toString().padStart(2, '0')
+            "${paddedCategory}-${paddedPosition}"
         }
         
         return if (extension.isNotEmpty()) {
