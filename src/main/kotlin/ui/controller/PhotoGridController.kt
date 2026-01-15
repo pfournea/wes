@@ -148,6 +148,26 @@ class PhotoGridController(
 
     fun updateImageDisplay() {
         imageContainer.children.clear()
+        
+        // Create PhotoCards for any ImageViews that don't have them yet
+        for (imageView in imageViews) {
+            if (imageView !in photoCards) {
+                // Find the corresponding photo
+                val photoId = ImageUtils.getPhotoId(imageView) ?: continue
+                val photo = photoService.getPhotoById(photoId) 
+                    ?: categoryService.findPhotoById(photoId) 
+                    ?: continue
+                
+                val photoCard = PhotoCard(
+                    imageView = imageView,
+                    photo = photo,
+                    onDeleteRequested = { /* Will be handled if in category */ },
+                    isInCategory = currentCategory != null
+                )
+                photoCards[imageView] = photoCard
+            }
+        }
+        
         // Add PhotoCard containers which wrap ImageViews with delete button
         imageContainer.children.addAll(photoCards.values.map { it.container })
         selectionHandler.updateVisualSelection()
