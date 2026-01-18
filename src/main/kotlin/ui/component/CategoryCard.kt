@@ -1,6 +1,8 @@
 package ui.component
 
 import domain.model.Category
+import javafx.animation.FadeTransition
+import javafx.animation.ScaleTransition
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.control.*
@@ -8,18 +10,20 @@ import javafx.scene.image.ImageView
 import javafx.scene.layout.*
 import javafx.scene.text.Font
 import javafx.scene.text.FontWeight
+import javafx.util.Duration
 import util.ImageCache
 import util.StyleConstants
 
 /**
- * Simplified category card component.
+ * Modern category card component with glassmorphism design.
  * Features:
  * - Single thumbnail preview (first photo)
- * - Photo count badge
+ * - Photo count badge with gradient
  * - Select button (eye icon) to filter photos in main grid
- * - Delete button (visible on hover)
+ * - Delete button (visible on hover with animation)
  * - Empty state message
- * - Selection visual feedback (blue border + background)
+ * - Selection visual feedback (gradient border + elevation)
+ * - Smooth animations and micro-interactions
  */
 class CategoryCard(
     category: Category,
@@ -31,10 +35,11 @@ class CategoryCard(
 
     private val nameLabel = Label(category.name)
     private val selectButton = Button("👁")
-    private val deleteButton = Button("❌")
-    private val photoCountLabel = Label()
+    private val deleteButton = Button("✕")
+    private val photoCountBadge = Label()
     private val thumbnailContainer = StackPane()
-    private val emptyStateLabel = Label("Drag photos here\n👇")
+    private val emptyStateLabel = Label("Drag photos here")
+    private val emptyStateIcon = Label("📸")
     private val photoContainer = VBox()
     
     private var selected = false
@@ -42,7 +47,7 @@ class CategoryCard(
     init {
         setupCard()
         setupHeader()
-        setupPhotoCount()
+        setupPhotoCountBadge()
         setupThumbnailView()
         setupPhotoContainer()
         updatePhotoCount()
@@ -50,7 +55,7 @@ class CategoryCard(
 
     private fun setupCard() {
         styleClass.add("category-card")
-        spacing = 10.0
+        spacing = 12.0
         padding = Insets(StyleConstants.CATEGORY_CARD_PADDING)
         prefWidth = StyleConstants.CATEGORY_CARD_WIDTH
         maxWidth = StyleConstants.CATEGORY_CARD_WIDTH
@@ -58,47 +63,75 @@ class CategoryCard(
         
         updateCardStyle()
 
-        // Subtle hover effect for delete button
+        // Smooth hover animation
         setOnMouseEntered {
-            deleteButton.isVisible = true
+            deleteButton.opacity = 1.0
+            animateCardElevation(true)
         }
 
         setOnMouseExited {
-            deleteButton.isVisible = false
+            deleteButton.opacity = 0.0
+            animateCardElevation(false)
         }
     }
 
     private fun setupHeader() {
-        val headerBox = HBox(10.0)
+        val headerBox = HBox(12.0)
         headerBox.alignment = Pos.CENTER_LEFT
 
-        // Name label
-        nameLabel.font = Font.font("System", FontWeight.SEMI_BOLD, 16.0)
+        // Name label with modern typography
+        nameLabel.font = Font.font("System", FontWeight.BOLD, 17.0)
         nameLabel.styleClass.add("category-name")
+        nameLabel.style = "-fx-text-fill: #2d3748;"
 
-        // Select button (eye icon) - always visible
+        // Select button (eye icon) - modern gradient style
         selectButton.style = """
-            -fx-background-color: transparent;
-            -fx-text-fill: #0077ff;
-            -fx-font-size: 20;
-            -fx-padding: 0 5 0 5;
+            -fx-background-color: linear-gradient(to bottom right, 
+                ${StyleConstants.PRIMARY_GRADIENT_START}, 
+                ${StyleConstants.PRIMARY_GRADIENT_END});
+            -fx-text-fill: white;
+            -fx-font-size: 18;
+            -fx-padding: 6 10 6 10;
+            -fx-background-radius: 8;
             -fx-cursor: hand;
+            -fx-effect: ${StyleConstants.ELEVATION_1};
         """.trimIndent()
         selectButton.setOnAction {
             toggleSelection()
         }
+        
+        // Hover effect for select button
+        selectButton.setOnMouseEntered {
+            animateButtonScale(selectButton, 1.1)
+        }
+        selectButton.setOnMouseExited {
+            animateButtonScale(selectButton, 1.0)
+        }
 
-        // Delete button (hidden by default)
+        // Delete button (hidden by default) - danger style
         deleteButton.style = """
-            -fx-background-color: transparent;
-            -fx-text-fill: #cc0000;
+            -fx-background-color: linear-gradient(to bottom right, 
+                ${StyleConstants.WARNING_GRADIENT_START}, 
+                ${StyleConstants.WARNING_GRADIENT_END});
+            -fx-text-fill: white;
             -fx-font-size: 16;
-            -fx-padding: 0 5 0 5;
+            -fx-font-weight: bold;
+            -fx-padding: 6 10 6 10;
+            -fx-background-radius: 8;
             -fx-cursor: hand;
+            -fx-effect: ${StyleConstants.ELEVATION_1};
         """.trimIndent()
-        deleteButton.isVisible = false
+        deleteButton.opacity = 0.0
         deleteButton.setOnAction {
             showDeleteConfirmation()
+        }
+        
+        // Hover effect for delete button
+        deleteButton.setOnMouseEntered {
+            animateButtonScale(deleteButton, 1.1)
+        }
+        deleteButton.setOnMouseExited {
+            animateButtonScale(deleteButton, 1.0)
         }
 
         val spacer = Region()
@@ -108,25 +141,47 @@ class CategoryCard(
         children.add(headerBox)
     }
 
-    private fun setupPhotoCount() {
-        photoCountLabel.font = Font.font("System", FontWeight.NORMAL, 13.0)
-        photoCountLabel.style = "-fx-text-fill: #666666;"
-        children.add(photoCountLabel)
+    private fun setupPhotoCountBadge() {
+        photoCountBadge.font = Font.font("System", FontWeight.SEMI_BOLD, 13.0)
+        photoCountBadge.style = """
+            -fx-background-color: linear-gradient(to right, 
+                ${StyleConstants.ACCENT_GRADIENT_START}, 
+                ${StyleConstants.ACCENT_GRADIENT_END});
+            -fx-text-fill: white;
+            -fx-padding: 4 12 4 12;
+            -fx-background-radius: 12;
+            -fx-effect: ${StyleConstants.ELEVATION_1};
+        """.trimIndent()
+        
+        val badgeContainer = HBox(photoCountBadge)
+        badgeContainer.alignment = Pos.CENTER_LEFT
+        children.add(badgeContainer)
     }
 
     private fun setupThumbnailView() {
         thumbnailContainer.minHeight = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
         thumbnailContainer.maxHeight = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
-        thumbnailContainer.style = "-fx-alignment: center;"
-        
-        // Empty state setup
-        emptyStateLabel.font = Font.font("System", 12.0)
-        emptyStateLabel.style = """
-            -fx-text-fill: #999999;
-            -fx-text-alignment: center;
+        thumbnailContainer.style = """
+            -fx-alignment: center;
+            -fx-background-color: #f7fafc;
+            -fx-background-radius: 12;
+            -fx-border-color: #e2e8f0;
+            -fx-border-width: 1;
+            -fx-border-radius: 12;
         """.trimIndent()
+        
+        // Empty state setup - modern style
+        val emptyStateBox = VBox(8.0)
+        emptyStateBox.alignment = Pos.CENTER
+        
+        emptyStateIcon.font = Font.font("System", 40.0)
+        emptyStateIcon.style = "-fx-text-fill: #cbd5e0;"
+        
+        emptyStateLabel.font = Font.font("System", FontWeight.NORMAL, 13.0)
+        emptyStateLabel.style = "-fx-text-fill: #a0aec0;"
         emptyStateLabel.alignment = Pos.CENTER
-        emptyStateLabel.maxWidth = Double.MAX_VALUE
+        
+        emptyStateBox.children.addAll(emptyStateIcon, emptyStateLabel)
         
         children.add(thumbnailContainer)
     }
@@ -145,24 +200,45 @@ class CategoryCard(
 
     private fun updateCardStyle() {
         if (selected) {
-            // Selected state: blue border + light blue background
-            style = """
-                -fx-background-color: ${StyleConstants.CATEGORY_SELECTED_BACKGROUND};
-                -fx-background-radius: 8;
-                -fx-border-color: ${StyleConstants.SELECTED_BORDER_COLOR};
-                -fx-border-radius: 8;
-                -fx-border-width: 3;
-            """.trimIndent()
+            // Use THE SAME constant as photo selection
+            style = StyleConstants.SELECTED_STYLE
         } else {
-            // Normal state
+            // Normal state - clean card with subtle shadow
             style = """
                 -fx-background-color: white;
-                -fx-background-radius: 8;
+                -fx-background-radius: ${StyleConstants.CATEGORY_CARD_BORDER_RADIUS};
                 -fx-border-color: ${StyleConstants.CATEGORY_CARD_BORDER_COLOR};
-                -fx-border-radius: 8;
+                -fx-border-radius: ${StyleConstants.CATEGORY_CARD_BORDER_RADIUS};
                 -fx-border-width: 1;
+                -fx-effect: ${StyleConstants.ELEVATION_2};
             """.trimIndent()
         }
+    }
+    
+    private fun animateCardElevation(elevated: Boolean) {
+        val effect = if (elevated) StyleConstants.ELEVATION_3 else StyleConstants.ELEVATION_2
+        
+        if (selected) {
+            // Use THE SAME constant as photo selection
+            style = StyleConstants.SELECTED_STYLE
+        } else {
+            style = """
+                -fx-background-color: white;
+                -fx-background-radius: ${StyleConstants.CATEGORY_CARD_BORDER_RADIUS};
+                -fx-border-color: ${if (elevated) StyleConstants.CATEGORY_CARD_HOVER_BORDER_COLOR else StyleConstants.CATEGORY_CARD_BORDER_COLOR};
+                -fx-border-radius: ${StyleConstants.CATEGORY_CARD_BORDER_RADIUS};
+                -fx-border-width: 1;
+                -fx-effect: $effect;
+            """.trimIndent()
+        }
+    }
+    
+    private fun animateButtonScale(button: Button, targetScale: Double) {
+        val scaleTransition = ScaleTransition(Duration.millis(150.0), button).apply {
+            toX = targetScale
+            toY = targetScale
+        }
+        scaleTransition.play()
     }
 
     private fun showDeleteConfirmation() {
@@ -182,14 +258,26 @@ class CategoryCard(
      */
     fun updatePhotoCount() {
         val count = category.photos.size
-        photoCountLabel.text = if (count == 1) "📷 $count photo" else "📷 $count photos"
+        photoCountBadge.text = if (count == 1) "$count photo" else "$count photos"
         
         // Update thumbnail - show only first photo
         thumbnailContainer.children.clear()
         
         if (count == 0) {
             // Show empty state
-            thumbnailContainer.children.add(emptyStateLabel)
+            val emptyStateBox = VBox(8.0)
+            emptyStateBox.alignment = Pos.CENTER
+            
+            val icon = Label("📸")
+            icon.font = Font.font("System", 40.0)
+            icon.style = "-fx-text-fill: #cbd5e0;"
+            
+            val text = Label("Drag photos here")
+            text.font = Font.font("System", FontWeight.NORMAL, 13.0)
+            text.style = "-fx-text-fill: #a0aec0;"
+            
+            emptyStateBox.children.addAll(icon, text)
+            thumbnailContainer.children.add(emptyStateBox)
         } else {
             // Show ONLY first photo as thumbnail
             val firstPhoto = category.photos[0]
@@ -198,7 +286,9 @@ class CategoryCard(
                 fitWidth = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
                 fitHeight = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
                 isPreserveRatio = true
-                isSmooth = false  // No high-quality rendering needed
+                isSmooth = true
+                
+                style = "-fx-background-radius: 8; -fx-border-radius: 8;"
                 
                 // Apply rotation if needed
                 if (firstPhoto.rotationDegrees != 0) {
@@ -222,12 +312,14 @@ class CategoryCard(
      */
     fun setDragOver(isDragOver: Boolean) {
         if (isDragOver) {
+            // Drag-over state: exact same border as selection, with light background tint
             style = """
-                -fx-background-color: #e3f2fd;
-                -fx-background-radius: 8;
-                -fx-border-color: ${StyleConstants.SELECTED_BORDER_COLOR};
-                -fx-border-radius: 8;
-                -fx-border-width: 3;
+                -fx-background-color: rgba(76, 99, 210, 0.08);
+                -fx-background-radius: 12;
+                -fx-border-color: #4c63d2;
+                -fx-border-radius: 12;
+                -fx-border-width: 5;
+                -fx-effect: dropshadow(gaussian, rgba(76, 99, 210, 0.6), 28.0, 0.7, 0, 0);
             """.trimIndent()
         } else {
             updateCardStyle()

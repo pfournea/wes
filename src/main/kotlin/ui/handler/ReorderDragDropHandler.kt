@@ -114,7 +114,7 @@ class ReorderDragDropHandler(
         nodeWithDropIndicator = targetNode
         
         targetNode.effect = DropShadow().apply {
-            color = Color.web(StyleConstants.SELECTED_BORDER_COLOR)
+            color = Color.web("#4c63d2")
             radius = 20.0
             spread = 0.8
         }
