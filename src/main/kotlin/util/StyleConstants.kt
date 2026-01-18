@@ -40,4 +40,9 @@ object StyleConstants {
     // Drag and drop
     const val DRAG_OPACITY = 0.5
     const val NORMAL_OPACITY = 1.0
+    
+    // Rotation controls
+    const val ROTATION_BUTTON_SIZE = 36.0
+    const val ROTATION_BUTTON_ICON_SIZE = 16
+    const val ROTATION_OVERLAY_BACKGROUND = "rgba(0, 0, 0, 0.5)"
 }

@@ -10,7 +10,8 @@ data class Photo(
     val id: String,
     val path: Path,
     val fileName: String,
-    val originalIndex: Int
+    val originalIndex: Int,
+    val rotationDegrees: Int = 0  // Rotation in degrees: 0, 90, 180, 270
 ) {
     companion object {
         fun fromPath(path: Path, index: Int): Photo {

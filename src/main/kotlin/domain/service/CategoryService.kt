@@ -115,4 +115,29 @@ class CategoryService {
         }
         return category
     }
+
+    /**
+     * Updates a photo's rotation within a category.
+     * 
+     * @param photoId Photo ID to update
+     * @param categoryId Category ID containing the photo
+     * @param rotationDegrees New rotation value (0, 90, 180, 270)
+     * @return Updated category or null if not found
+     */
+    fun updatePhotoRotationInCategory(photoId: String, categoryId: String, rotationDegrees: Int): Category? {
+        val index = categories.indexOfFirst { it.id == categoryId }
+        if (index == -1) return null
+        
+        val currentCategory = categories[index]
+        val photoIndex = currentCategory.photos.indexOfFirst { it.id == photoId }
+        if (photoIndex == -1) return null
+        
+        val photos = currentCategory.photos.toMutableList()
+        val photo = photos[photoIndex]
+        photos[photoIndex] = photo.copy(rotationDegrees = rotationDegrees)
+        
+        val updatedCategory = currentCategory.copy(photos = photos)
+        categories[index] = updatedCategory
+        return updatedCategory
+    }
 }

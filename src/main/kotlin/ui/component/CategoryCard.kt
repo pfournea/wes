@@ -199,6 +199,11 @@ class CategoryCard(
                 fitHeight = StyleConstants.CATEGORY_CARD_THUMBNAIL_SIZE
                 isPreserveRatio = true
                 isSmooth = false  // No high-quality rendering needed
+                
+                // Apply rotation if needed
+                if (firstPhoto.rotationDegrees != 0) {
+                    util.ImageUtils.applyRotation(this, firstPhoto.rotationDegrees)
+                }
             }
             
             thumbnailContainer.children.add(imageView)

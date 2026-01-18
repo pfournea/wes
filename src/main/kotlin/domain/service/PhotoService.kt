@@ -48,4 +48,21 @@ class PhotoService {
     fun getPhotosByIndices(indices: List<Int>): List<Photo> {
         return indices.mapNotNull { photos.getOrNull(it) }
     }
+
+    /**
+     * Updates a photo's rotation in the collection.
+     * 
+     * @param photoId Photo ID to update
+     * @param rotationDegrees New rotation value (0, 90, 180, 270)
+     * @return Updated photo or null if not found
+     */
+    fun updatePhotoRotation(photoId: String, rotationDegrees: Int): Photo? {
+        val index = photos.indexOfFirst { it.id == photoId }
+        if (index == -1) return null
+        
+        val photo = photos[index]
+        val updatedPhoto = photo.copy(rotationDegrees = rotationDegrees)
+        photos[index] = updatedPhoto
+        return updatedPhoto
+    }
 }

@@ -4,6 +4,7 @@ import domain.model.Category
 import domain.model.Photo
 import domain.service.CategoryService
 import domain.service.PhotoService
+import domain.service.RotationService
 import javafx.scene.control.Alert
 import javafx.scene.control.ButtonType
 import javafx.scene.control.Label
@@ -28,6 +29,7 @@ class PhotoGridController(
 ) {
     private var currentCategory: Category? = null
     private val photoCards = mutableMapOf<ImageView, PhotoCard>()
+    private val rotationService = RotationService()
 
     fun getImageViews(): MutableList<ImageView> = imageViews
 
@@ -64,6 +66,8 @@ class PhotoGridController(
                     imageView = imageView,
                     photo = photo,
                     onDeleteRequested = { handlePhotoDelete(photo, latestCategory) },
+                    onRotateLeft = { handleRotateLeft(photo, latestCategory) },
+                    onRotateRight = { handleRotateRight(photo, latestCategory) },
                     isInCategory = true
                 )
                 photoCards[imageView] = photoCard
@@ -72,6 +76,8 @@ class PhotoGridController(
                 val photoCard = PhotoCard(
                     imageView = imageView,
                     photo = photo,
+                    onRotateLeft = { handleRotateLeft(photo, null) },
+                    onRotateRight = { handleRotateRight(photo, null) },
                     isInCategory = false
                 )
                 photoCards[imageView] = photoCard
@@ -100,6 +106,34 @@ class PhotoGridController(
         }
 
         updateImageDisplay()
+    }
+
+    private fun handleRotateLeft(photo: Photo, category: Category?) {
+        val rotatedPhoto = rotationService.rotateCounterClockwise(photo)
+        
+        if (category != null) {
+            // Photo is in a category
+            categoryService.updatePhotoRotationInCategory(photo.id, category.id, rotatedPhoto.rotationDegrees)
+            updateForCategory(category)
+        } else {
+            // Photo is in main grid
+            photoService.updatePhotoRotation(photo.id, rotatedPhoto.rotationDegrees)
+            updateForCategory(null)
+        }
+    }
+
+    private fun handleRotateRight(photo: Photo, category: Category?) {
+        val rotatedPhoto = rotationService.rotateClockwise(photo)
+        
+        if (category != null) {
+            // Photo is in a category
+            categoryService.updatePhotoRotationInCategory(photo.id, category.id, rotatedPhoto.rotationDegrees)
+            updateForCategory(category)
+        } else {
+            // Photo is in main grid
+            photoService.updatePhotoRotation(photo.id, rotatedPhoto.rotationDegrees)
+            updateForCategory(null)
+        }
     }
 
     private fun handlePhotoDelete(photo: Photo, category: Category) {
@@ -162,6 +196,8 @@ class PhotoGridController(
                     imageView = imageView,
                     photo = photo,
                     onDeleteRequested = { /* Will be handled if in category */ },
+                    onRotateLeft = { handleRotateLeft(photo, currentCategory) },
+                    onRotateRight = { handleRotateRight(photo, currentCategory) },
                     isInCategory = currentCategory != null
                 )
                 photoCards[imageView] = photoCard

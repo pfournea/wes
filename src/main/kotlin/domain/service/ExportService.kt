@@ -1,13 +1,20 @@
 package domain.service
 
 import domain.model.Category
+import javafx.embed.swing.SwingFXUtils
+import javafx.scene.image.Image
+import java.awt.geom.AffineTransform
+import java.awt.image.AffineTransformOp
+import java.awt.image.BufferedImage
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import javax.imageio.ImageIO
 
 /**
  * Service for exporting categorized photos to a directory.
  * Handles renaming photos based on category and position.
+ * Applies rotation transformations during export.
  */
 class ExportService {
 
@@ -56,9 +63,16 @@ class ExportService {
                         // Generate new filename: <category_number>_<position_5digits>.<ext>
                         val newFilename = generateFilename(category.number, position, extension)
                         
-                        // Copy file to target directory
+                        // Copy or rotate and save file to target directory
                         val targetFile = targetDirectory.resolve(newFilename)
-                        Files.copy(photo.path, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                        
+                        if (photo.rotationDegrees == 0) {
+                            // No rotation - simple copy
+                            Files.copy(photo.path, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                        } else {
+                            // Rotation needed - load, rotate, and save
+                            saveRotatedImage(photo.path, targetFile, photo.rotationDegrees, extension)
+                        }
                         
                         photosCopied++
                     } catch (e: Exception) {
@@ -83,6 +97,66 @@ class ExportService {
                 errors = errors
             )
         }
+    }
+
+    /**
+     * Loads an image, rotates it, and saves to target file.
+     * 
+     * @param sourcePath Source image path
+     * @param targetPath Target save path
+     * @param rotationDegrees Rotation angle (90, 180, 270)
+     * @param extension File extension to determine format
+     */
+    private fun saveRotatedImage(sourcePath: Path, targetPath: Path, rotationDegrees: Int, extension: String) {
+        // Read the image
+        val bufferedImage = ImageIO.read(sourcePath.toFile())
+            ?: throw IllegalArgumentException("Failed to read image: $sourcePath")
+        
+        // Apply rotation
+        val rotatedImage = rotateImage(bufferedImage, rotationDegrees)
+        
+        // Determine image format (default to jpg if unknown)
+        val format = when (extension.lowercase()) {
+            "jpg", "jpeg" -> "jpg"
+            "png" -> "png"
+            "gif" -> "gif"
+            "bmp" -> "bmp"
+            else -> "jpg"
+        }
+        
+        // Save rotated image
+        ImageIO.write(rotatedImage, format, targetPath.toFile())
+    }
+
+    /**
+     * Rotates a BufferedImage by the specified degrees.
+     * 
+     * @param image Source image
+     * @param degrees Rotation angle (90, 180, 270)
+     * @return Rotated image
+     */
+    private fun rotateImage(image: BufferedImage, degrees: Int): BufferedImage {
+        val radians = Math.toRadians(degrees.toDouble())
+        val sin = Math.abs(Math.sin(radians))
+        val cos = Math.abs(Math.cos(radians))
+        
+        val width = image.width
+        val height = image.height
+        
+        // Calculate new dimensions after rotation
+        val newWidth = (width * cos + height * sin).toInt()
+        val newHeight = (width * sin + height * cos).toInt()
+        
+        // Create transform
+        val transform = AffineTransform()
+        transform.translate((newWidth - width) / 2.0, (newHeight - height) / 2.0)
+        transform.rotate(radians, width / 2.0, height / 2.0)
+        
+        val op = AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR)
+        
+        // Create new image with rotated dimensions
+        val rotatedImage = BufferedImage(newWidth, newHeight, image.type)
+        return op.filter(image, rotatedImage)
     }
 
     /**
