@@ -22,7 +22,8 @@ object StyleConstants {
     const val BACKGROUND_OVERLAY = "rgba(255, 255, 255, 0.85)"
     
     // Selection styles - ONE style for both photos and categories
-    const val SELECTED_STYLE = "-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #4c63d2; -fx-border-radius: 12; -fx-border-width: 5; -fx-effect: dropshadow(gaussian, rgba(76, 99, 210, 0.6), 28.0, 0.7, 0, 0);"
+    // Uses effects that don't add to layout bounds to prevent spacing issues
+    const val SELECTED_STYLE = "-fx-effect: dropshadow(gaussian, #4c63d2, 10, 0.8, 0, 0), innershadow(gaussian, #4c63d2, 10, 0.6, 0, 0);"
 
     // Category styles - Material elevation
     const val CATEGORY_NORMAL_STYLE = "-fx-border-color: transparent; -fx-border-width: 0; -fx-padding: 5;"

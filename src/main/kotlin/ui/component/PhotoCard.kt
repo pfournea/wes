@@ -38,6 +38,26 @@ class PhotoCard(
     private fun setupContainer() {
         // Add the image view as the main content
         container.children.add(imageView)
+        
+        // Constrain the container size to match the ImageView
+        // This ensures buttons are positioned relative to the image, not extra space
+        container.maxWidthProperty().bind(imageView.fitWidthProperty())
+        
+        // Bind max height to the actual image height (accounting for aspect ratio)
+        imageView.imageProperty().addListener { _, _, newImage ->
+            if (newImage != null && imageView.isPreserveRatio) {
+                val aspectRatio = newImage.height / newImage.width
+                container.maxHeight = imageView.fitWidth * aspectRatio
+            }
+        }
+        
+        // Set initial max height if image is already loaded
+        imageView.image?.let { image ->
+            if (imageView.isPreserveRatio) {
+                val aspectRatio = image.height / image.width
+                container.maxHeight = imageView.fitWidth * aspectRatio
+            }
+        }
 
         // Setup rotation controls (corners)
         setupRotationControls()
@@ -68,10 +88,12 @@ class PhotoCard(
             -fx-background-radius: 50%;
         """.trimIndent()
 
-        rotateLeftButton.opacity = 0.0
+        rotateLeftButton.isVisible = false
         rotateLeftButton.setOnAction {
             onRotateLeft()
         }
+        StackPane.setAlignment(rotateLeftButton, Pos.BOTTOM_LEFT)
+        StackPane.setMargin(rotateLeftButton, Insets(0.0, 0.0, 8.0, 8.0))
         
         // Hover animation
         rotateLeftButton.setOnMouseEntered {
@@ -80,9 +102,6 @@ class PhotoCard(
         rotateLeftButton.setOnMouseExited {
             animateButtonScale(rotateLeftButton, 1.0)
         }
-        
-        StackPane.setAlignment(rotateLeftButton, Pos.BOTTOM_LEFT)
-        StackPane.setMargin(rotateLeftButton, Insets(0.0, 0.0, 8.0, 8.0))
 
         // Right rotation button (bottom-right corner) - modern gradient style
         rotateRightButton.style = """
@@ -102,10 +121,12 @@ class PhotoCard(
             -fx-background-radius: 50%;
         """.trimIndent()
 
-        rotateRightButton.opacity = 0.0
+        rotateRightButton.isVisible = false
         rotateRightButton.setOnAction {
             onRotateRight()
         }
+        StackPane.setAlignment(rotateRightButton, Pos.BOTTOM_RIGHT)
+        StackPane.setMargin(rotateRightButton, Insets(0.0, 8.0, 8.0, 0.0))
         
         // Hover animation
         rotateRightButton.setOnMouseEntered {
@@ -114,9 +135,6 @@ class PhotoCard(
         rotateRightButton.setOnMouseExited {
             animateButtonScale(rotateRightButton, 1.0)
         }
-        
-        StackPane.setAlignment(rotateRightButton, Pos.BOTTOM_RIGHT)
-        StackPane.setMargin(rotateRightButton, Insets(0.0, 8.0, 8.0, 0.0))
 
         container.children.addAll(rotateLeftButton, rotateRightButton)
     }
@@ -140,10 +158,14 @@ class PhotoCard(
             -fx-background-radius: 50%;
         """.trimIndent()
 
-        deleteButton.opacity = 0.0
+        deleteButton.isVisible = false
         deleteButton.setOnAction {
             onDeleteRequested()
         }
+        
+        // Position the delete button at the top-right corner
+        StackPane.setAlignment(deleteButton, Pos.TOP_RIGHT)
+        StackPane.setMargin(deleteButton, Insets(8.0, 8.0, 0.0, 0.0))
         
         // Hover animation
         deleteButton.setOnMouseEntered {
@@ -152,26 +174,23 @@ class PhotoCard(
         deleteButton.setOnMouseExited {
             animateButtonScale(deleteButton, 1.0)
         }
-
-        // Position the delete button at the top-right corner
-        StackPane.setAlignment(deleteButton, Pos.TOP_RIGHT)
-        StackPane.setMargin(deleteButton, Insets(8.0, 8.0, 0.0, 0.0))
+        
         container.children.add(deleteButton)
     }
 
     private fun setupHoverEffects() {
         container.setOnMouseEntered {
-            rotateLeftButton.opacity = 1.0
-            rotateRightButton.opacity = 1.0
+            rotateLeftButton.isVisible = true
+            rotateRightButton.isVisible = true
             if (isInCategoryView) {
-                deleteButton.opacity = 1.0
+                deleteButton.isVisible = true
             }
         }
 
         container.setOnMouseExited {
-            rotateLeftButton.opacity = 0.0
-            rotateRightButton.opacity = 0.0
-            deleteButton.opacity = 0.0
+            rotateLeftButton.isVisible = false
+            rotateRightButton.isVisible = false
+            deleteButton.isVisible = false
         }
     }
     
@@ -189,7 +208,7 @@ class PhotoCard(
     fun setInCategoryView(inCategory: Boolean) {
         isInCategoryView = inCategory
         if (!inCategory) {
-            deleteButton.opacity = 0.0
+            deleteButton.isVisible = false
         }
     }
 }
