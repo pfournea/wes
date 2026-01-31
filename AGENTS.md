@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2025-12-28
-**Commit:** b481407
+**Generated:** 2026-01-31
+**Commit:** 116efc1
 **Branch:** main
 
 ## OVERVIEW
@@ -16,15 +16,18 @@ wes/
 │   ├── Main.kt                    # Entry: Application.launch()
 │   ├── domain/
 │   │   ├── model/                 # Photo, Category, Selection (data classes)
-│   │   └── service/               # Business logic (no UI deps)
+│   │   └── service/               # PhotoService, CategoryService, SelectionService,
+│   │                              # FileService, ExportService, RotationService
 │   ├── ui/
 │   │   ├── PhotoCategorizerApp.kt # Main app, orchestrates all components
-│   │   ├── component/             # CategoryCard, ButtonFactory
-│   │   ├── controller/            # View-model coordination
-│   │   └── handler/               # Event handling (drag-drop, selection)
-│   └── util/                      # ImageCache, ImageUtils, StyleConstants
+│   │   ├── component/             # CategoryCard, PhotoCard, ButtonFactory,
+│   │   │                          # AddCategoryDialog, HelpDialog
+│   │   ├── controller/            # Layout, PhotoGrid, Category, Upload, Export
+│   │   └── handler/               # DragDrop, Selection, ReorderDragDrop
+│   └── util/                      # ImageCache, ImageUtils, StyleConstants, Icons
 ├── src/test/kotlin/               # Mirrors main structure
 ├── build.gradle.kts               # Kotlin 2.2.21, JavaFX 21.0.2, JUnit 5
+│                                  # org.beryx.runtime for jpackage
 └── gradle/                        # Wrapper (9.2.1)
 ```
 
@@ -37,7 +40,8 @@ wes/
 | Add UI component | `ui/component/` | Extend JavaFX node |
 | Add event handling | `ui/handler/` | Separate from controllers |
 | Add controller | `ui/controller/` | Wire in PhotoCategorizerApp |
-| Modify constants | `util/StyleConstants.kt` | All UI dimensions here |
+| Modify constants | `util/StyleConstants.kt` | Enterprise design system |
+| Add icons | `util/Icons.kt` | Unicode icon constants |
 | Add test | `src/test/kotlin/` mirror path | Use @Nested, backtick names |
 
 ## CONVENTIONS
@@ -68,6 +72,7 @@ wes/
 ZIP → FileService.extractPhotosFromZip() → PhotoService.setPhotos()
 Drag to category → DragDropHandler → CategoryService.addPhotoToCategory() + PhotoService.removePhoto()
 Reorder in category → ReorderDragDropHandler → CategoryService.reorderPhotoInCategory()
+Rotate photo → RotationService.rotateClockwise/CounterClockwise() → updates Photo.rotationDegrees
 Delete category → PhotoService.restorePhotos() (sorted by originalIndex)
 Export → ExportService.exportCategories() → copies to category subdirs
 ```
@@ -75,12 +80,18 @@ Export → ExportService.exportCategories() → copies to category subdirs
 ## COMMANDS
 
 ```bash
+# Development
 ./gradlew build          # Build project
 ./gradlew run            # Run application
 ./gradlew test           # Run all tests (headless via Monocle)
 ./gradlew test --tests "ClassName"           # Single test class
 ./gradlew test --tests "ClassName.InnerClass" # Nested test group
 ./gradlew clean          # Clean build artifacts
+
+# Distribution (current platform only)
+./gradlew runtimeZip     # Portable zip with bundled JRE (~50MB)
+./gradlew jpackageImage  # Standalone app folder (~77MB)
+./gradlew jpackage       # Platform installer (.deb/.msi/.dmg, ~47MB)
 ```
 
 ## NOTES
@@ -91,6 +102,7 @@ Export → ExportService.exportCategories() → copies to category subdirs
 - **Dual photo existence**: Photos in PhotoService (grid) AND CategoryService (organization)
 - **Destructive export**: ExportService clears target dirs before writing
 - **Photo ID format**: `${originalIndex}_${filename}` for uniqueness
-
-## CRITICAL
-- **Don't use git to update / delete / add files.
+- **Photo rotation**: Photo.rotationDegrees stores 0/90/180/270, RotationService handles transforms
+- **Design system**: StyleConstants uses enterprise palette (PRIMARY_*, NEUTRAL_*, etc.)
+- **Unicode icons**: Icons.kt provides consistent icons without external deps
+- **Cross-platform packaging**: org.beryx.runtime plugin creates native installers

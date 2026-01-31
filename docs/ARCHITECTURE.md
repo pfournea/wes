@@ -7,64 +7,85 @@ Photo Categorizer is a JavaFX desktop application for organizing photos into cat
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         UI Layer                                │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              PhotoCategorizerApp (Orchestrator)          │   │
-│  │  - Initializes all services and handlers                │   │
-│  │  - Manages JavaFX Stage/Scene lifecycle                 │   │
-│  │  - Wires up event handlers to UI components             │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│           │                    │                    │           │
-│  ┌────────▼─────┐    ┌────────▼────────┐   ┌──────▼───────┐   │
-│  │ CategoryCard │    │ SelectionHandler│   │DragDropHandler│   │
-│  │  (Component) │    │    (Handler)    │   │   (Handler)   │   │
-│  └──────────────┘    └─────────────────┘   └──────────────┘   │
-│                                             ┌──────────────┐   │
-│                                             │ReorderDrag   │   │
-│                                             │DropHandler   │   │
-│                                             └──────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       Domain Layer                              │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                      Services                            │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │   │
-│  │  │ PhotoService │  │CategoryService│  │SelectionSvc  │   │   │
-│  │  │              │  │              │  │              │   │   │
-│  │  │ Owns:        │  │ Owns:        │  │ Owns:        │   │   │
-│  │  │ - Uncateg.   │  │ - Categories │  │ - Selection  │   │   │
-│  │  │   photos     │  │ - Photo→Cat  │  │   state      │   │   │
-│  │  │              │  │   mappings   │  │ - Anchor     │   │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘   │   │
-│  │                                                          │   │
-│  │  ┌──────────────┐  ┌──────────────┐                     │   │
-│  │  │ FileService  │  │ExportService │                     │   │
-│  │  │              │  │              │                     │   │
-│  │  │ - ZIP        │  │ - File copy  │                     │   │
-│  │  │   extraction │  │ - Renaming   │                     │   │
-│  │  └──────────────┘  └──────────────┘                     │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                              │                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                       Models                             │   │
-│  │  ┌──────────┐    ┌──────────┐    ┌──────────┐           │   │
-│  │  │  Photo   │    │ Category │    │Selection │           │   │
-│  │  │  (data)  │    │  (data)  │    │  (data)  │           │   │
-│  │  └──────────┘    └──────────┘    └──────────┘           │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       Util Layer                                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │  ImageCache  │  │  ImageUtils  │  │StyleConstants│          │
-│  │  (LRU cache) │  │  (loading)   │  │  (UI values) │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               UI Layer                                       │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                   PhotoCategorizerApp (Orchestrator)                   │  │
+│  │  - Initializes all services, controllers, and handlers                │  │
+│  │  - Manages JavaFX Stage/Scene lifecycle                               │  │
+│  │  - Wires up event handlers to UI components                           │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                         │
+│  ┌─────────────────────────────────┼─────────────────────────────────────┐  │
+│  │                          Controllers                                   │  │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐          │  │
+│  │  │ Layout     │ │ PhotoGrid  │ │ Category   │ │ Upload     │          │  │
+│  │  │ Controller │ │ Controller │ │ Controller │ │ Controller │          │  │
+│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘          │  │
+│  │                               ┌────────────┐                           │  │
+│  │                               │ Export     │                           │  │
+│  │                               │ Controller │                           │  │
+│  │                               └────────────┘                           │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                         │
+│  ┌─────────────────────────────────┼─────────────────────────────────────┐  │
+│  │                           Components                                   │  │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐          │  │
+│  │  │ Category   │ │ PhotoCard  │ │ Button     │ │ AddCategory│          │  │
+│  │  │ Card       │ │            │ │ Factory    │ │ Dialog     │          │  │
+│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘          │  │
+│  │                               ┌────────────┐                           │  │
+│  │                               │ HelpDialog │                           │  │
+│  │                               └────────────┘                           │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                         │
+│  ┌─────────────────────────────────┼─────────────────────────────────────┐  │
+│  │                            Handlers                                    │  │
+│  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────────┐   │  │
+│  │  │SelectionHandler│  │DragDropHandler │  │ReorderDragDropHandler │   │  │
+│  │  └────────────────┘  └────────────────┘  └────────────────────────┘   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Domain Layer                                    │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                            Services                                    │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                 │  │
+│  │  │ PhotoService │  │CategoryService│  │SelectionSvc  │                 │  │
+│  │  │              │  │              │  │              │                 │  │
+│  │  │ Owns:        │  │ Owns:        │  │ Owns:        │                 │  │
+│  │  │ - Uncateg.   │  │ - Categories │  │ - Selection  │                 │  │
+│  │  │   photos     │  │ - Photo→Cat  │  │   state      │                 │  │
+│  │  │              │  │   mappings   │  │ - Anchor     │                 │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘                 │  │
+│  │                                                                        │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                 │  │
+│  │  │ FileService  │  │ExportService │  │RotationSvc   │                 │  │
+│  │  │              │  │              │  │              │                 │  │
+│  │  │ - ZIP        │  │ - File copy  │  │ - Rotate CW  │                 │  │
+│  │  │   extraction │  │ - Renaming   │  │ - Rotate CCW │                 │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘                 │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                         │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                             Models                                     │  │
+│  │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐             │  │
+│  │  │    Photo     │    │   Category   │    │  Selection   │             │  │
+│  │  │  (data)      │    │    (data)    │    │   (data)     │             │  │
+│  │  └──────────────┘    └──────────────┘    └──────────────┘             │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               Util Layer                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │  ImageCache  │  │  ImageUtils  │  │StyleConstants│  │    Icons     │     │
+│  │  (LRU cache) │  │  (loading)   │  │(design system)│  │  (unicode)   │     │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘     │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Package Structure
@@ -82,19 +103,31 @@ src/main/kotlin/
 │       ├── CategoryService.kt
 │       ├── SelectionService.kt
 │       ├── FileService.kt
-│       └── ExportService.kt
+│       ├── ExportService.kt
+│       └── RotationService.kt  # Photo rotation logic
 ├── ui/
 │   ├── PhotoCategorizerApp.kt  # Main Application
-│   ├── component/
-│   │   └── CategoryCard.kt
-│   └── handler/
+│   ├── component/              # Reusable UI components
+│   │   ├── CategoryCard.kt
+│   │   ├── PhotoCard.kt        # Photo display with controls
+│   │   ├── ButtonFactory.kt    # Consistent button creation
+│   │   ├── AddCategoryDialog.kt
+│   │   └── HelpDialog.kt
+│   ├── controller/             # UI region controllers
+│   │   ├── LayoutController.kt
+│   │   ├── PhotoGridController.kt
+│   │   ├── CategoryController.kt
+│   │   ├── UploadController.kt
+│   │   └── ExportController.kt
+│   └── handler/                # Event handlers
 │       ├── DragDropHandler.kt
 │       ├── ReorderDragDropHandler.kt
 │       └── SelectionHandler.kt
 └── util/
     ├── ImageCache.kt
     ├── ImageUtils.kt
-    └── StyleConstants.kt
+    ├── Icons.kt                # Unicode icon constants
+    └── StyleConstants.kt       # Enterprise design system
 ```
 
 ## Design Decisions
@@ -110,6 +143,7 @@ Each service owns its domain state:
 | `SelectionService` | `Selection` | Current selection state |
 | `FileService` | - | ZIP extraction (stateless) |
 | `ExportService` | - | File export (stateless) |
+| `RotationService` | - | Photo rotation (stateless) |
 
 **Rationale**: Clear ownership prevents state synchronization bugs. When a photo moves from main pool to a category, `PhotoService.removePhoto()` and `CategoryService.addPhotoToCategory()` are called atomically.
 
