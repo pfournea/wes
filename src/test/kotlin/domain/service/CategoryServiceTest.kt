@@ -49,6 +49,19 @@ class CategoryServiceTest {
         }
 
         @Test
+        fun `should create batch categories with custom start number`() {
+            val createdCategories = categoryService.createCategories(startNumber = 20, amount = 10)
+
+            assertEquals(10, createdCategories.size)
+            assertEquals(10, categoryService.getCategoryCount())
+            assertEquals("Category 20", createdCategories.first().name)
+            assertEquals("Category 29", createdCategories.last().name)
+            
+            assertEquals(30, categoryService.getNextCategoryNumber())
+        }
+
+
+        @Test
         fun `should track created categories`() {
             categoryService.createCategory()
             categoryService.createCategory()

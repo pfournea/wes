@@ -5,6 +5,7 @@ import domain.service.CategoryService
 import domain.service.PhotoService
 import javafx.scene.layout.TilePane
 import ui.component.CategoryCard
+import ui.component.AddCategoryDialog
 import ui.handler.DragDropHandler
 
 class CategoryController(
@@ -19,19 +20,31 @@ class CategoryController(
     private var selectedCategory: Category? = null
 
     fun addCategory() {
-        val category = categoryService.createCategory()
+        val dialog = AddCategoryDialog()
+        dialog.setSuggestedStartNumber(categoryService.getNextCategoryNumber())
 
-        lateinit var categoryCard: CategoryCard
+        val result = dialog.showAndWait()
 
-        categoryCard = CategoryCard(
-            category = category,
-            onDeleteRequested = { deleteCategory(category) },
-            onSelectionChanged = { isSelected -> handleCategorySelection(category, categoryCard, isSelected) }
-        )
+        result.ifPresent { dialogResult ->
+            val categories = categoryService.createCategories(
+                dialogResult.startNumber,
+                dialogResult.amount
+            )
 
-        categoryCardMap[category.id] = categoryCard
-        setupCategoryCardDragHandlers(categoryCard, category)
-        categoryContainer.children.add(categoryCard)
+            categories.forEach { category ->
+                lateinit var categoryCard: CategoryCard
+
+                categoryCard = CategoryCard(
+                    category = category,
+                    onDeleteRequested = { deleteCategory(category) },
+                    onSelectionChanged = { isSelected -> handleCategorySelection(category, categoryCard, isSelected) }
+                )
+
+                categoryCardMap[category.id] = categoryCard
+                setupCategoryCardDragHandlers(categoryCard, category)
+                categoryContainer.children.add(categoryCard)
+            }
+        }
     }
 
     fun deleteCategory(category: Category) {

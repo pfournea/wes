@@ -19,6 +19,32 @@ class CategoryService {
         return category
     }
 
+    /**
+     * Creates multiple categories starting from the specified number.
+     * @param startNumber The starting category number
+     * @param amount The number of categories to create
+     * @return List of created categories
+     */
+    fun createCategories(startNumber: Int, amount: Int): List<Category> {
+        val createdCategories = mutableListOf<Category>()
+        for (i in 0 until amount) {
+            val number = startNumber + i
+            val category = Category.create(number)
+            categories.add(category)
+            createdCategories.add(category)
+            
+            if (number >= nextCategoryNumber) {
+                nextCategoryNumber = number + 1
+            }
+        }
+        return createdCategories
+    }
+
+    /**
+     * Gets the next suggested category number.
+     */
+    fun getNextCategoryNumber(): Int = nextCategoryNumber
+
     fun getCategories(): List<Category> = categories.toList()
 
     fun addPhotoToCategory(photo: Photo, category: Category, position: Int? = null): Category {
