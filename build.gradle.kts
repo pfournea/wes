@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.2.21"
     application
     id("org.openjfx.javafxplugin") version "0.1.0"
+    id("org.beryx.runtime") version "2.0.1"
 }
 
 repositories {
@@ -75,4 +76,58 @@ kotlin {
     }
 }
 
-
+// Cross-platform native installer configuration
+runtime {
+    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+    
+    // Specify required modules for the JRE
+    modules.set(listOf(
+        "java.base",
+        "java.logging",
+        "java.desktop",
+        "java.prefs",
+        "javafx.controls",
+        "javafx.fxml",
+        "javafx.graphics",
+        "javafx.base"
+    ))
+    
+    jpackage {
+        val currentOs = org.gradle.internal.os.OperatingSystem.current()
+        val imgType = if (currentOs.isWindows) "ico" else if (currentOs.isMacOsX) "icns" else "png"
+        
+        // Common installer options
+        installerOptions.addAll(listOf(
+            "--vendor", "WES Photo Categorizer",
+            "--app-version", "1.0.0"
+        ))
+        
+        // Windows installer
+        if (currentOs.isWindows) {
+            installerType = "msi"
+            installerOptions.addAll(listOf(
+                "--win-dir-chooser",
+                "--win-menu",
+                "--win-shortcut"
+            ))
+        }
+        
+        // Linux installer  
+        if (currentOs.isLinux) {
+            installerType = "deb"
+            installerOptions.addAll(listOf(
+                "--linux-menu-group", "Graphics",
+                "--linux-shortcut",
+                "--linux-package-name", "wes-photo-categorizer"
+            ))
+        }
+        
+        // macOS installer
+        if (currentOs.isMacOsX) {
+            installerType = "dmg"
+            installerOptions.addAll(listOf(
+                "--mac-package-name", "WESPhotoCategorizer"
+            ))
+        }
+    }
+}
