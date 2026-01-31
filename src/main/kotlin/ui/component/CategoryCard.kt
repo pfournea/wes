@@ -76,13 +76,15 @@ class CategoryCard(
     }
 
     private fun setupHeader() {
-        val headerBox = HBox(12.0)
+        val headerBox = HBox(8.0)
         headerBox.alignment = Pos.CENTER_LEFT
 
         // Name label with modern typography
         nameLabel.font = Font.font("System", FontWeight.BOLD, 17.0)
         nameLabel.styleClass.add("category-name")
         nameLabel.style = "-fx-text-fill: #2d3748;"
+        nameLabel.minWidth = Region.USE_PREF_SIZE
+        nameLabel.tooltip = Tooltip(category.name)
 
         // Select button (eye icon) - modern gradient style
         selectButton.style = """
