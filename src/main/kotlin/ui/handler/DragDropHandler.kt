@@ -16,7 +16,8 @@ class DragDropHandler(
     private val photoService: PhotoService,
     private val categoryService: CategoryService,
     private val imageViews: MutableList<ImageView>,
-    private val onPhotosDropped: () -> Unit
+    private val onPhotosDropped: () -> Unit,
+    private val onSourceCategoryUpdated: (String) -> Unit = {}
 ) {
     private var draggedImageView: ImageView? = null
 
@@ -86,6 +87,8 @@ class DragDropHandler(
         val children = photoContainer.children
         val insertIdx = currentCategory.photos.size
 
+        val sourceCategoryIds = mutableSetOf<String>()
+        
         var currentInsertIdx = insertIdx
         photosToMove.forEach { photo ->
             val latestCategory = categoryService.getCategoryById(category.id) ?: return@forEach
@@ -98,6 +101,7 @@ class DragDropHandler(
             val previousCategory = categoryService.findCategoryContainingPhoto(photo)
             if (previousCategory != null) {
                 categoryService.removePhotoFromCategory(photo, previousCategory)
+                sourceCategoryIds.add(previousCategory.id)
             }
 
             categoryService.addPhotoToCategory(photo, latestCategory, currentInsertIdx)
@@ -117,6 +121,10 @@ class DragDropHandler(
 
         children.addAll(imageViewsToMove)
         onPhotosDropped()
+        
+        sourceCategoryIds.forEach { categoryId ->
+            onSourceCategoryUpdated(categoryId)
+        }
 
         return true
     }

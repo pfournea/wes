@@ -64,10 +64,11 @@ abstract class DragDropTestBase : ApplicationTest() {
         dragDropHandler = DragDropHandler(
             photoService,
             categoryService,
-            sharedImageViews
-        ) {
-            updateImageDisplay()
-        }
+            sharedImageViews,
+            onPhotosDropped = {
+                updateImageDisplay()
+            }
+        )
 
         val root = VBox(10.0, imageContainer, categoryContainer)
         stage.scene = Scene(root, 800.0, 600.0)

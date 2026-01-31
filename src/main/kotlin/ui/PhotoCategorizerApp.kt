@@ -146,17 +146,23 @@ class PhotoCategorizerApp : Application() {
         dragDropHandler = DragDropHandler(
             photoService,
             categoryService,
-            sharedImageViews
-        ) {
-            photoGridController.updateForCategory(categoryController.getSelectedCategory())
-            selectionHandler.clearSelection()
-        }
+            sharedImageViews,
+            onPhotosDropped = {
+                photoGridController.updateForCategory(categoryController.getSelectedCategory())
+                selectionHandler.clearSelection()
+            },
+            onSourceCategoryUpdated = { categoryId ->
+                categoryController.updateCategoryCard(categoryId)
+            }
+        )
 
         reorderDragDropHandler = ReorderDragDropHandler(
             categoryService,
             sharedImageViews
         ) {
-            photoGridController.updateForCategory(categoryController.getSelectedCategory())
+            val selectedCategory = categoryController.getSelectedCategory()
+            photoGridController.updateForCategory(selectedCategory)
+            selectedCategory?.let { categoryController.updateCategoryCard(it.id) }
         }
 
         photoGridController = PhotoGridController(

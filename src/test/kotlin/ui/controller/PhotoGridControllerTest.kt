@@ -65,10 +65,11 @@ class PhotoGridControllerTest : ApplicationTest() {
         dragDropHandler = DragDropHandler(
             photoService,
             categoryService,
-            sharedImageViews
-        ) {
-            photoGridController.updateImageDisplay()
-        }
+            sharedImageViews,
+            onPhotosDropped = {
+                photoGridController.updateImageDisplay()
+            }
+        )
 
         reorderDragDropHandler = ReorderDragDropHandler(
             categoryService,
