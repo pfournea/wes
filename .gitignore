@@ -30,7 +30,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-/docs/
 /build/
 /.gradle/
 /.idea/
