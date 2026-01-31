@@ -14,6 +14,7 @@ import java.io.File
 class UploadController(
     private val fileService: FileService,
     private val photoService: PhotoService,
+    private val onResetState: () -> Unit,
     private val onPhotosLoaded: (List<Photo>, List<ImageView>) -> Unit
 ) {
     fun handleUploadZip(primaryStage: Stage) {
@@ -25,6 +26,8 @@ class UploadController(
     }
 
     private fun loadPhotosFromZip(zipFile: File) {
+        onResetState()
+        
         val photos = fileService.extractPhotosFromZip(zipFile)
         photoService.setPhotos(photos)
 

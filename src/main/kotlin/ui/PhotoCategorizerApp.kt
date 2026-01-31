@@ -194,17 +194,15 @@ class PhotoCategorizerApp : Application() {
 
         uploadController = UploadController(
             fileService,
-            photoService
-        ) { _, imageViews ->
-            categoryController.clearSelection()
-            selectionHandler.clearSelection()
-
-            sharedImageViews.clear()
-            for (iv in imageViews) {
-                photoGridController.setupImageViewHandlers(iv)
-                sharedImageViews.add(iv)
+            photoService,
+            onResetState = {
+                categoryController.clearAllCategories()
+                selectionHandler.clearSelection()
+                sharedImageViews.clear()
+                imageContainer.children.clear()
             }
-            photoGridController.updateImageDisplay()
+        ) { _, _ ->
+            photoGridController.updateForCategory(null)
         }
 
         exportController = ExportController(exportService)

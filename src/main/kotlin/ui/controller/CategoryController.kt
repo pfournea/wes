@@ -84,6 +84,13 @@ class CategoryController(
         }
         selectedCategory = null
     }
+    
+    fun clearAllCategories() {
+        selectedCategory = null
+        categoryCardMap.clear()
+        categoryContainer.children.clear()
+        categoryService.clearCategories()
+    }
 
     fun getCategoryCard(categoryId: String): CategoryCard? = categoryCardMap[categoryId]
 
