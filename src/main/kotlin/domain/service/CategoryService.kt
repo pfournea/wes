@@ -19,16 +19,14 @@ class CategoryService {
         return category
     }
 
-    /**
-     * Creates multiple categories starting from the specified number.
-     * @param startNumber The starting category number
-     * @param amount The number of categories to create
-     * @return List of created categories
-     */
     fun createCategories(startNumber: Int, amount: Int): List<Category> {
+        val existingNumbers = categories.map { it.number }.toSet()
         val createdCategories = mutableListOf<Category>()
+        
         for (i in 0 until amount) {
             val number = startNumber + i
+            if (number in existingNumbers) continue
+            
             val category = Category.create(number)
             categories.add(category)
             createdCategories.add(category)
@@ -37,7 +35,15 @@ class CategoryService {
                 nextCategoryNumber = number + 1
             }
         }
+        
+        sortCategoriesByNumber()
         return createdCategories
+    }
+    
+    private fun sortCategoriesByNumber() {
+        val sorted = categories.sortedBy { it.number }
+        categories.clear()
+        categories.addAll(sorted)
     }
 
     /**

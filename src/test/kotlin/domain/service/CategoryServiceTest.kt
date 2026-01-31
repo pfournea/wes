@@ -59,6 +59,31 @@ class CategoryServiceTest {
             
             assertEquals(30, categoryService.getNextCategoryNumber())
         }
+        
+        @Test
+        fun `should skip existing categories when creating batch`() {
+            categoryService.createCategories(startNumber = 5, amount = 3)
+            
+            val secondBatch = categoryService.createCategories(startNumber = 4, amount = 5)
+            
+            assertEquals(2, secondBatch.size)
+            assertEquals("Category 4", secondBatch[0].name)
+            assertEquals("Category 8", secondBatch[1].name)
+            assertEquals(5, categoryService.getCategoryCount())
+        }
+        
+        @Test
+        fun `should sort categories by number after creation`() {
+            categoryService.createCategories(startNumber = 10, amount = 2)
+            categoryService.createCategories(startNumber = 1, amount = 2)
+            
+            val allCategories = categoryService.getCategories()
+            assertEquals(4, allCategories.size)
+            assertEquals(1, allCategories[0].number)
+            assertEquals(2, allCategories[1].number)
+            assertEquals(10, allCategories[2].number)
+            assertEquals(11, allCategories[3].number)
+        }
 
 
         @Test

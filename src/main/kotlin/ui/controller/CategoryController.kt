@@ -44,7 +44,17 @@ class CategoryController(
                 setupCategoryCardDragHandlers(categoryCard, category)
                 categoryContainer.children.add(categoryCard)
             }
+            
+            sortCategoryCards()
         }
+    }
+    
+    private fun sortCategoryCards() {
+        val sortedCards = categoryContainer.children
+            .filterIsInstance<CategoryCard>()
+            .sortedBy { it.getCategory().number }
+        categoryContainer.children.clear()
+        categoryContainer.children.addAll(sortedCards)
     }
 
     fun deleteCategory(category: Category) {
