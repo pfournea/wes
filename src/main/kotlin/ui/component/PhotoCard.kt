@@ -8,14 +8,11 @@ import javafx.scene.control.Button
 import javafx.scene.image.ImageView
 import javafx.scene.layout.StackPane
 import javafx.util.Duration
+import util.Icons
 import util.StyleConstants
 
 /**
- * Wrapper that adds a delete button and rotation controls to an ImageView.
- * The delete button appears on hover and is only visible when viewing a category (top-right).
- * Rotation controls appear on hover for all photos (bottom-left and bottom-right corners).
- * This creates a StackPane container with the ImageView and control buttons.
- * Modern design with gradient buttons and smooth animations.
+ * Professional photo card with clean control overlays.
  */
 class PhotoCard(
     val imageView: ImageView,
@@ -25,9 +22,9 @@ class PhotoCard(
     private val onRotateRight: () -> Unit = {},
     isInCategory: Boolean = false
 ) {
-    private val deleteButton = Button("✕")
-    private val rotateLeftButton = Button("↶")
-    private val rotateRightButton = Button("↷")
+    private val deleteButton = Button(Icons.REMOVE)
+    private val rotateLeftButton = Button(Icons.ROTATE_LEFT)
+    private val rotateRightButton = Button(Icons.ROTATE_RIGHT)
     private var isInCategoryView = isInCategory
     val container = StackPane()
 
@@ -36,14 +33,10 @@ class PhotoCard(
     }
 
     private fun setupContainer() {
-        // Add the image view as the main content
         container.children.add(imageView)
         
-        // Constrain the container size to match the ImageView
-        // This ensures buttons are positioned relative to the image, not extra space
         container.maxWidthProperty().bind(imageView.fitWidthProperty())
         
-        // Bind max height to the actual image height (accounting for aspect ratio)
         imageView.imageProperty().addListener { _, _, newImage ->
             if (newImage != null && imageView.isPreserveRatio) {
                 val aspectRatio = newImage.height / newImage.width
@@ -51,7 +44,6 @@ class PhotoCard(
             }
         }
         
-        // Set initial max height if image is already loaded
         imageView.image?.let { image ->
             if (imageView.isPreserveRatio) {
                 val aspectRatio = image.height / image.width
@@ -59,80 +51,39 @@ class PhotoCard(
             }
         }
 
-        // Setup rotation controls (corners)
         setupRotationControls()
-
-        // Setup delete button (top-right)
         setupDeleteButton()
-
-        // Set up hover effects
         setupHoverEffects()
     }
 
     private fun setupRotationControls() {
-        // Left rotation button (bottom-left corner) - modern gradient style
-        rotateLeftButton.style = """
-            -fx-background-color: linear-gradient(to bottom right, 
-                ${StyleConstants.ROTATION_BUTTON_GRADIENT_START}, 
-                ${StyleConstants.ROTATION_BUTTON_GRADIENT_END});
-            -fx-text-fill: white;
-            -fx-font-size: ${StyleConstants.ROTATION_BUTTON_ICON_SIZE};
-            -fx-font-weight: bold;
-            -fx-padding: 0;
-            -fx-min-width: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-min-height: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-pref-width: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-pref-height: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-cursor: hand;
-            -fx-effect: ${StyleConstants.ELEVATION_3};
-            -fx-background-radius: 50%;
-        """.trimIndent()
-
+        rotateLeftButton.style = buildControlButtonStyle(false)
         rotateLeftButton.isVisible = false
-        rotateLeftButton.setOnAction {
-            onRotateLeft()
-        }
+        rotateLeftButton.setOnAction { onRotateLeft() }
         StackPane.setAlignment(rotateLeftButton, Pos.BOTTOM_LEFT)
         StackPane.setMargin(rotateLeftButton, Insets(0.0, 0.0, 8.0, 8.0))
         
-        // Hover animation
         rotateLeftButton.setOnMouseEntered {
+            rotateLeftButton.style = buildControlButtonStyle(true)
             animateButtonScale(rotateLeftButton, 1.1)
         }
         rotateLeftButton.setOnMouseExited {
+            rotateLeftButton.style = buildControlButtonStyle(false)
             animateButtonScale(rotateLeftButton, 1.0)
         }
 
-        // Right rotation button (bottom-right corner) - modern gradient style
-        rotateRightButton.style = """
-            -fx-background-color: linear-gradient(to bottom right, 
-                ${StyleConstants.ROTATION_BUTTON_GRADIENT_START}, 
-                ${StyleConstants.ROTATION_BUTTON_GRADIENT_END});
-            -fx-text-fill: white;
-            -fx-font-size: ${StyleConstants.ROTATION_BUTTON_ICON_SIZE};
-            -fx-font-weight: bold;
-            -fx-padding: 0;
-            -fx-min-width: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-min-height: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-pref-width: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-pref-height: ${StyleConstants.ROTATION_BUTTON_SIZE};
-            -fx-cursor: hand;
-            -fx-effect: ${StyleConstants.ELEVATION_3};
-            -fx-background-radius: 50%;
-        """.trimIndent()
-
+        rotateRightButton.style = buildControlButtonStyle(false)
         rotateRightButton.isVisible = false
-        rotateRightButton.setOnAction {
-            onRotateRight()
-        }
+        rotateRightButton.setOnAction { onRotateRight() }
         StackPane.setAlignment(rotateRightButton, Pos.BOTTOM_RIGHT)
         StackPane.setMargin(rotateRightButton, Insets(0.0, 8.0, 8.0, 0.0))
         
-        // Hover animation
         rotateRightButton.setOnMouseEntered {
+            rotateRightButton.style = buildControlButtonStyle(true)
             animateButtonScale(rotateRightButton, 1.1)
         }
         rotateRightButton.setOnMouseExited {
+            rotateRightButton.style = buildControlButtonStyle(false)
             animateButtonScale(rotateRightButton, 1.0)
         }
 
@@ -140,42 +91,63 @@ class PhotoCard(
     }
 
     private fun setupDeleteButton() {
-        // Style the delete button - danger gradient
-        deleteButton.style = """
-            -fx-background-color: linear-gradient(to bottom right, 
-                ${StyleConstants.WARNING_GRADIENT_START}, 
-                ${StyleConstants.WARNING_GRADIENT_END});
-            -fx-text-fill: white;
-            -fx-font-size: 18;
-            -fx-font-weight: bold;
-            -fx-padding: 0;
-            -fx-min-width: 44;
-            -fx-min-height: 44;
-            -fx-pref-width: 44;
-            -fx-pref-height: 44;
-            -fx-cursor: hand;
-            -fx-effect: ${StyleConstants.ELEVATION_3};
-            -fx-background-radius: 50%;
-        """.trimIndent()
-
+        deleteButton.style = buildDangerButtonStyle(false)
         deleteButton.isVisible = false
-        deleteButton.setOnAction {
-            onDeleteRequested()
-        }
+        deleteButton.setOnAction { onDeleteRequested() }
         
-        // Position the delete button at the top-right corner
         StackPane.setAlignment(deleteButton, Pos.TOP_RIGHT)
         StackPane.setMargin(deleteButton, Insets(8.0, 8.0, 0.0, 0.0))
         
-        // Hover animation
         deleteButton.setOnMouseEntered {
+            deleteButton.style = buildDangerButtonStyle(true)
             animateButtonScale(deleteButton, 1.1)
         }
         deleteButton.setOnMouseExited {
+            deleteButton.style = buildDangerButtonStyle(false)
             animateButtonScale(deleteButton, 1.0)
         }
         
         container.children.add(deleteButton)
+    }
+
+    private fun buildControlButtonStyle(isHovered: Boolean): String {
+        val bgColor = if (isHovered) StyleConstants.PRIMARY_600 else StyleConstants.PRIMARY_500
+        val size = StyleConstants.CONTROL_BUTTON_SIZE
+        
+        return """
+            -fx-background-color: $bgColor;
+            -fx-text-fill: white;
+            -fx-font-size: ${StyleConstants.CONTROL_BUTTON_ICON_SIZE};
+            -fx-font-weight: bold;
+            -fx-padding: 0;
+            -fx-min-width: $size;
+            -fx-min-height: $size;
+            -fx-pref-width: $size;
+            -fx-pref-height: $size;
+            -fx-cursor: hand;
+            -fx-effect: ${StyleConstants.SHADOW_MD};
+            -fx-background-radius: ${StyleConstants.RADIUS_FULL};
+        """.trimIndent()
+    }
+
+    private fun buildDangerButtonStyle(isHovered: Boolean): String {
+        val bgColor = if (isHovered) StyleConstants.DANGER_600 else StyleConstants.DANGER_500
+        val size = StyleConstants.CONTROL_BUTTON_SIZE
+        
+        return """
+            -fx-background-color: $bgColor;
+            -fx-text-fill: white;
+            -fx-font-size: ${StyleConstants.CONTROL_BUTTON_ICON_SIZE};
+            -fx-font-weight: bold;
+            -fx-padding: 0;
+            -fx-min-width: $size;
+            -fx-min-height: $size;
+            -fx-pref-width: $size;
+            -fx-pref-height: $size;
+            -fx-cursor: hand;
+            -fx-effect: ${StyleConstants.SHADOW_MD};
+            -fx-background-radius: ${StyleConstants.RADIUS_FULL};
+        """.trimIndent()
     }
 
     private fun setupHoverEffects() {
@@ -195,16 +167,13 @@ class PhotoCard(
     }
     
     private fun animateButtonScale(button: Button, targetScale: Double) {
-        val scaleTransition = ScaleTransition(Duration.millis(150.0), button).apply {
+        val scaleTransition = ScaleTransition(Duration.millis(StyleConstants.ANIMATION_FAST), button).apply {
             toX = targetScale
             toY = targetScale
         }
         scaleTransition.play()
     }
 
-    /**
-     * Sets whether the photo is in a category view (enables delete button).
-     */
     fun setInCategoryView(inCategory: Boolean) {
         isInCategoryView = inCategory
         if (!inCategory) {
