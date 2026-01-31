@@ -16,6 +16,7 @@ import javafx.scene.layout.TilePane
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import ui.component.ButtonFactory
+import ui.component.HelpDialog
 import ui.controller.CategoryController
 import ui.controller.ExportController
 import ui.controller.LayoutController
@@ -72,6 +73,10 @@ class PhotoCategorizerApp : Application() {
             setOnAction { exportController.handleSaveImages(primaryStage, categoryService.getCategories()) }
         }
 
+        val helpButton = ButtonFactory.createHelpButton().apply {
+            setOnAction { HelpDialog().showAndWait() }
+        }
+
         val addCategoryButton = ButtonFactory.createAddCategoryButton().apply {
             setOnAction { categoryController.addCategory() }
         }
@@ -112,7 +117,7 @@ class PhotoCategorizerApp : Application() {
             """.trimIndent()
         }
 
-        val controlsBox = HBox(uploadButton, saveButton).apply {
+        val controlsBox = HBox(uploadButton, saveButton, helpButton).apply {
             spacing = StyleConstants.SPACING_MD
             padding = Insets(StyleConstants.SPACING_BASE, StyleConstants.SPACING_XL, StyleConstants.SPACING_BASE, StyleConstants.SPACING_XL)
             style = """

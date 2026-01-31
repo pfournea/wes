@@ -95,6 +95,9 @@ object ButtonFactory {
     fun createAddCategoryButton(): Button = 
         createPrimaryButton("Add Category", Icons.ADD)
     
+    fun createHelpButton(): Button = 
+        createSecondaryButton("Hulp", Icons.INFO)
+    
     // Legacy method for backward compatibility
     fun createGradientButton(
         text: String, 
