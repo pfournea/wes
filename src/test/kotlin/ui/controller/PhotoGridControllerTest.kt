@@ -96,17 +96,19 @@ class PhotoGridControllerTest : ApplicationTest() {
 
     @BeforeEach
     fun setUp() {
-        photoService.clearPhotos()
-        categoryService.clearCategories()
-        selectionService.clearSelection()
+        interact {
+            photoService.clearPhotos()
+            categoryService.clearCategories()
+            selectionService.clearSelection()
 
-        photo1 = Photo.fromPath(Paths.get("/test/photo1.jpg"), 0)
-        photo2 = Photo.fromPath(Paths.get("/test/photo2.jpg"), 1)
-        photo3 = Photo.fromPath(Paths.get("/test/photo3.jpg"), 2)
+            photo1 = Photo.fromPath(Paths.get("/test/photo1.jpg"), 0)
+            photo2 = Photo.fromPath(Paths.get("/test/photo2.jpg"), 1)
+            photo3 = Photo.fromPath(Paths.get("/test/photo3.jpg"), 2)
 
-        photoService.setPhotos(listOf(photo1, photo2, photo3))
-        sharedImageViews.clear()
-        imageContainer.children.clear()
+            photoService.setPhotos(listOf(photo1, photo2, photo3))
+            sharedImageViews.clear()
+            imageContainer.children.clear()
+        }
     }
 
     @Nested

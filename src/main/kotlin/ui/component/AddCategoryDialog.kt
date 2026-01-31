@@ -11,6 +11,9 @@ import javafx.scene.control.SpinnerValueFactory
 import javafx.scene.layout.GridPane
 import util.StyleConstants
 
+/**
+ * Professional dialog for adding categories.
+ */
 class AddCategoryDialog : Dialog<AddCategoryDialog.Result>() {
 
     data class Result(
@@ -34,25 +37,22 @@ class AddCategoryDialog : Dialog<AddCategoryDialog.Result>() {
 
     init {
         title = "Add Categories"
-        headerText = "Create multiple categories"
+        headerText = "Create new categories"
 
         dialogPane.content = createContent()
         dialogPane.buttonTypes.addAll(ButtonType.OK, ButtonType.CANCEL)
 
         dialogPane.style = """
-            -fx-background-color: ${StyleConstants.BACKGROUND_LIGHT};
-            -fx-font-family: 'Segoe UI', 'Roboto', sans-serif;
+            -fx-background-color: ${StyleConstants.BACKGROUND_PRIMARY};
+            -fx-font-family: ${StyleConstants.FONT_FAMILY};
         """.trimIndent()
 
         val okButton = dialogPane.lookupButton(ButtonType.OK) as Button
-        okButton.style = buildButtonStyle(
-            StyleConstants.PRIMARY_GRADIENT_START,
-            StyleConstants.PRIMARY_GRADIENT_END
-        )
-        okButton.text = "Create Categories"
+        okButton.style = buildPrimaryButtonStyle()
+        okButton.text = "Create"
 
         val cancelButton = dialogPane.lookupButton(ButtonType.CANCEL) as Button
-        cancelButton.style = buildButtonStyle("#6c757d", "#495057")
+        cancelButton.style = buildSecondaryButtonStyle()
 
         setResultConverter { buttonType ->
             if (buttonType == ButtonType.OK) {
@@ -72,18 +72,18 @@ class AddCategoryDialog : Dialog<AddCategoryDialog.Result>() {
 
     private fun createContent(): GridPane {
         return GridPane().apply {
-            hgap = 16.0
-            vgap = 16.0
-            padding = Insets(24.0)
+            hgap = StyleConstants.SPACING_BASE
+            vgap = StyleConstants.SPACING_BASE
+            padding = Insets(StyleConstants.SPACING_XL)
             alignment = Pos.CENTER
 
-            val startLabel = Label("Start Category Number:").apply {
+            val startLabel = Label("Start number:").apply {
                 style = labelStyle()
             }
             add(startLabel, 0, 0)
             add(startNumberSpinner, 1, 0)
 
-            val amountLabel = Label("Amount of Categories:").apply {
+            val amountLabel = Label("Number of categories:").apply {
                 style = labelStyle()
             }
             add(amountLabel, 0, 1)
@@ -91,9 +91,8 @@ class AddCategoryDialog : Dialog<AddCategoryDialog.Result>() {
 
             val previewLabel = Label().apply {
                 style = """
-                    -fx-font-size: 12px;
-                    -fx-text-fill: #666666;
-                    -fx-font-style: italic;
+                    -fx-font-size: ${StyleConstants.FONT_SIZE_SM}px;
+                    -fx-text-fill: ${StyleConstants.TEXT_SECONDARY};
                 """.trimIndent()
             }
             add(previewLabel, 0, 2, 2, 1)
@@ -107,7 +106,7 @@ class AddCategoryDialog : Dialog<AddCategoryDialog.Result>() {
                 } else {
                     "${start}, ${start + 1}, ${start + 2}, ..., $end"
                 }
-                previewLabel.text = "Categories to create: $preview"
+                previewLabel.text = "Will create: $preview"
             }
 
             startNumberSpinner.valueProperty().addListener { _, _, _ -> updatePreview() }
@@ -117,27 +116,38 @@ class AddCategoryDialog : Dialog<AddCategoryDialog.Result>() {
     }
 
     private fun labelStyle(): String = """
-        -fx-font-size: 14px;
-        -fx-font-weight: bold;
-        -fx-text-fill: #333333;
+        -fx-font-size: ${StyleConstants.FONT_SIZE_BASE}px;
+        -fx-font-weight: 500;
+        -fx-text-fill: ${StyleConstants.TEXT_PRIMARY};
     """.trimIndent()
 
     private fun buildSpinnerStyle(): String = """
         -fx-background-color: white;
-        -fx-background-radius: 8;
-        -fx-border-color: #e0e0e0;
-        -fx-border-radius: 8;
-        -fx-font-size: 14px;
+        -fx-background-radius: ${StyleConstants.RADIUS_MD};
+        -fx-border-color: ${StyleConstants.BORDER_DEFAULT};
+        -fx-border-radius: ${StyleConstants.RADIUS_MD};
+        -fx-font-size: ${StyleConstants.FONT_SIZE_BASE}px;
     """.trimIndent()
 
-    private fun buildButtonStyle(gradientStart: String, gradientEnd: String): String = """
-        -fx-background-color: linear-gradient(to right, $gradientStart, $gradientEnd);
+    private fun buildPrimaryButtonStyle(): String = """
+        -fx-background-color: ${StyleConstants.PRIMARY_500};
         -fx-text-fill: white;
-        -fx-font-size: 14px;
-        -fx-font-weight: bold;
+        -fx-font-size: ${StyleConstants.FONT_SIZE_BASE}px;
+        -fx-font-weight: 600;
         -fx-padding: 10 20 10 20;
-        -fx-background-radius: 8;
+        -fx-background-radius: ${StyleConstants.RADIUS_BASE};
         -fx-cursor: hand;
-        -fx-effect: ${StyleConstants.ELEVATION_1};
+    """.trimIndent()
+
+    private fun buildSecondaryButtonStyle(): String = """
+        -fx-background-color: transparent;
+        -fx-text-fill: ${StyleConstants.TEXT_PRIMARY};
+        -fx-font-size: ${StyleConstants.FONT_SIZE_BASE}px;
+        -fx-font-weight: 500;
+        -fx-padding: 10 20 10 20;
+        -fx-background-radius: ${StyleConstants.RADIUS_BASE};
+        -fx-border-color: ${StyleConstants.BORDER_DEFAULT};
+        -fx-border-radius: ${StyleConstants.RADIUS_BASE};
+        -fx-cursor: hand;
     """.trimIndent()
 }

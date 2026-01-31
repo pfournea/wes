@@ -35,16 +35,16 @@ class PhotoCategorizerApp : Application() {
 
     private val imageContainer = TilePane().apply {
         orientation = Orientation.HORIZONTAL
-        hgap = 16.0
-        vgap = 16.0
+        hgap = StyleConstants.GRID_GAP
+        vgap = StyleConstants.GRID_GAP
         prefColumns = StyleConstants.DEFAULT_COLUMNS
-        padding = Insets(20.0)
+        padding = Insets(StyleConstants.SPACING_XL)
     }
     private val categoryContainer = TilePane().apply {
-        hgap = 20.0
-        vgap = 20.0
-        prefColumns = 2
-        padding = Insets(20.0)
+        hgap = StyleConstants.SPACING_BASE
+        vgap = StyleConstants.SPACING_BASE
+        prefColumns = 1
+        padding = Insets(StyleConstants.SPACING_XL)
     }
 
     private val sharedImageViews = mutableListOf<ImageView>()
@@ -76,20 +76,20 @@ class PhotoCategorizerApp : Application() {
             setOnAction { categoryController.addCategory() }
         }
 
-        // Modern category scroll pane with gradient background
+        // Modern category scroll pane
         val categoryScrollPane = ScrollPane(categoryContainer).apply {
             fitToWidthProperty().set(true)
             style = """
-                -fx-background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
-                -fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+                -fx-background: ${StyleConstants.BACKGROUND_SECONDARY};
+                -fx-background-color: ${StyleConstants.BACKGROUND_SECONDARY};
             """.trimIndent()
         }
 
         val categoryVBox = VBox(addCategoryButton, categoryScrollPane).apply {
-            spacing = 16.0
+            spacing = StyleConstants.SPACING_BASE
             minWidth = StyleConstants.MIN_CATEGORY_PANE_WIDTH
-            padding = Insets(16.0)
-            style = "-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);"
+            padding = Insets(StyleConstants.SPACING_BASE)
+            style = "-fx-background-color: ${StyleConstants.BACKGROUND_SECONDARY};"
         }
 
         // Modern photo grid scroll pane
@@ -97,30 +97,28 @@ class PhotoCategorizerApp : Application() {
             fitToWidthProperty().set(true)
             minWidth = StyleConstants.MIN_PHOTO_PANE_WIDTH
             style = """
-                -fx-background: ${StyleConstants.BACKGROUND_LIGHT};
-                -fx-background-color: ${StyleConstants.BACKGROUND_LIGHT};
+                -fx-background: ${StyleConstants.BACKGROUND_PRIMARY};
+                -fx-background-color: ${StyleConstants.BACKGROUND_PRIMARY};
             """.trimIndent()
         }
 
-        // Modern split pane with subtle divider
+        // Modern split pane
         val root = javafx.scene.control.SplitPane(scrollPane, categoryVBox).apply {
             orientation = Orientation.HORIZONTAL
             setDividerPositions(StyleConstants.DEFAULT_DIVIDER_POSITION)
             style = """
-                -fx-background-color: ${StyleConstants.BACKGROUND_LIGHT};
+                -fx-background-color: ${StyleConstants.BACKGROUND_PRIMARY};
                 -fx-padding: 0;
             """.trimIndent()
         }
 
-        // Modern control panel with gradient background
         val controlsBox = HBox(uploadButton, saveButton).apply {
-            spacing = 16.0
-            padding = Insets(20.0)
+            spacing = StyleConstants.SPACING_MD
+            padding = Insets(StyleConstants.SPACING_BASE, StyleConstants.SPACING_XL, StyleConstants.SPACING_BASE, StyleConstants.SPACING_XL)
             style = """
-                -fx-background-color: linear-gradient(to right, 
-                    ${StyleConstants.PRIMARY_GRADIENT_START}, 
-                    ${StyleConstants.PRIMARY_GRADIENT_END});
-                -fx-effect: ${StyleConstants.ELEVATION_2};
+                -fx-background-color: ${StyleConstants.BACKGROUND_PRIMARY};
+                -fx-border-color: ${StyleConstants.BORDER_DEFAULT};
+                -fx-border-width: 0 0 1 0;
             """.trimIndent()
         }
 
