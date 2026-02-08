@@ -1,8 +1,6 @@
 package domain.service
 
 import domain.model.Category
-import javafx.embed.swing.SwingFXUtils
-import javafx.scene.image.Image
 import java.awt.geom.AffineTransform
 import java.awt.image.AffineTransformOp
 import java.awt.image.BufferedImage
