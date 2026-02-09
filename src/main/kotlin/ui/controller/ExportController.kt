@@ -3,11 +3,13 @@ package ui.controller
 import domain.model.Category
 import domain.service.ExportResult
 import domain.service.ExportService
+import javafx.application.Platform
 import javafx.concurrent.Task
 import javafx.scene.control.*
 import javafx.scene.layout.VBox
 import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
+import ui.component.ExportSuccessDialog
 import java.io.File
 
 class ExportController(private val exportService: ExportService) {
@@ -31,7 +33,7 @@ class ExportController(private val exportService: ExportService) {
             if (!confirmed) return
         }
 
-        showExportProgress(directory, categories)
+        showExportProgress(primaryStage, directory, categories)
     }
 
     private fun chooseDirectory(stage: Stage): File? {
@@ -40,7 +42,7 @@ class ExportController(private val exportService: ExportService) {
         }.showDialog(stage)
     }
 
-    private fun showExportProgress(directory: File, categories: List<Category>) {
+    private fun showExportProgress(primaryStage: Stage, directory: File, categories: List<Category>) {
         val progressDialog = Dialog<Void>()
         progressDialog.title = "Exporting Photos"
         progressDialog.headerText = "Copying photos to ${directory.name}..."
@@ -60,21 +62,25 @@ class ExportController(private val exportService: ExportService) {
 
         exportTask.setOnSucceeded {
             progressDialog.close()
-            handleExportSuccess(exportTask.value, directory)
+            Platform.runLater { handleExportSuccess(primaryStage, exportTask.value, directory) }
         }
 
         exportTask.setOnFailed {
             progressDialog.close()
-            showAlert(
-                Alert.AlertType.ERROR,
-                "Export Failed",
-                "An error occurred during export: ${exportTask.exception?.message}"
-            )
+            Platform.runLater {
+                showAlert(
+                    Alert.AlertType.ERROR,
+                    "Export Failed",
+                    "An error occurred during export: ${exportTask.exception?.message}"
+                )
+            }
         }
 
         exportTask.setOnCancelled {
             progressDialog.close()
-            showAlert(Alert.AlertType.INFORMATION, "Export Cancelled", "Export operation was cancelled by user.")
+            Platform.runLater {
+                showAlert(Alert.AlertType.INFORMATION, "Export Cancelled", "Export operation was cancelled by user.")
+            }
         }
 
         Thread(exportTask).apply { isDaemon = true }.start()
@@ -97,8 +103,10 @@ class ExportController(private val exportService: ExportService) {
         }
     }
 
-    private fun handleExportSuccess(result: ExportResult, directory: File) {
-        if (!result.success) {
+    private fun handleExportSuccess(primaryStage: Stage, result: ExportResult, directory: File) {
+        if (result.success) {
+            ExportSuccessDialog(directory, result.photosCopied).showAndWait()
+        } else {
             showAlert(
                 Alert.AlertType.ERROR,
                 "Export Failed",

@@ -14,6 +14,7 @@ import javafx.scene.image.ImageView
 import javafx.scene.layout.HBox
 import javafx.scene.layout.TilePane
 import javafx.scene.layout.VBox
+import javafx.stage.Screen
 import javafx.stage.Stage
 import ui.component.ButtonFactory
 import ui.component.HelpDialog
@@ -129,8 +130,20 @@ class PhotoCategorizerApp : Application() {
 
         val scene = Scene(VBox(controlsBox, root))
         primaryStage.scene = scene
-        primaryStage.isMaximized = true
+
+        // Set minimum window size to ensure usability
+        primaryStage.minWidth = StyleConstants.MIN_PHOTO_PANE_WIDTH + StyleConstants.MIN_CATEGORY_PANE_WIDTH
+        primaryStage.minHeight = 400.0
+
+        // Set default size based on screen dimensions (fallback if maximize fails)
+        val screenBounds = Screen.getPrimary().visualBounds
+        primaryStage.width = screenBounds.width * 0.9
+        primaryStage.height = screenBounds.height * 0.9
+
         primaryStage.show()
+
+        // Maximize after showing (more reliable across platforms)
+        primaryStage.isMaximized = true
 
         layoutController.setupResponsiveLayout(primaryStage, scrollPane, categoryScrollPane)
     }
