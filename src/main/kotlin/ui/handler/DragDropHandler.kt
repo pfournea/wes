@@ -8,6 +8,7 @@ import javafx.scene.image.ImageView
 import javafx.scene.input.DragEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
+import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import util.ImageUtils
 import util.StyleConstants
@@ -117,6 +118,7 @@ class DragDropHandler(
             iv.fitWidth = StyleConstants.PHOTO_CATEGORY_WIDTH
             iv.opacity = StyleConstants.NORMAL_OPACITY
             iv.style = ""
+            (iv.parent as? StackPane)?.style = StyleConstants.UNSELECTED_CONTAINER_STYLE
         }
 
         children.addAll(imageViewsToMove)

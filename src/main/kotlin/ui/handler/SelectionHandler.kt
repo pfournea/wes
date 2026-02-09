@@ -4,6 +4,7 @@ import domain.service.PhotoService
 import domain.service.SelectionService
 import javafx.scene.image.ImageView
 import javafx.scene.input.MouseEvent
+import javafx.scene.layout.StackPane
 import util.ImageUtils
 import util.StyleConstants
 
@@ -57,10 +58,11 @@ class SelectionHandler(
     fun updateVisualSelection() {
         imageViews.forEach { iv ->
             val photoId = ImageUtils.getPhotoId(iv) ?: return@forEach
+            val container = iv.parent as? StackPane
             if (selectionService.isSelected(photoId)) {
-                iv.style = StyleConstants.SELECTED_STYLE
+                container?.style = StyleConstants.SELECTED_CONTAINER_STYLE
             } else {
-                iv.style = ""
+                container?.style = StyleConstants.UNSELECTED_CONTAINER_STYLE
             }
         }
     }

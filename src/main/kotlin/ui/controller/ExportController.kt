@@ -124,10 +124,11 @@ class ExportController(private val exportService: ExportService) {
     }
 
     private fun showConfirmDialog(title: String, content: String): Boolean {
-        val result = Alert(Alert.AlertType.CONFIRMATION).apply {
+        val result = Alert(Alert.AlertType.WARNING).apply {
             this.title = title
             headerText = null
             contentText = content
+            buttonTypes.setAll(ButtonType.OK, ButtonType.CANCEL)
         }.showAndWait()
         return result.isPresent && result.get() == ButtonType.OK
     }

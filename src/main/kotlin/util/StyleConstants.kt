@@ -72,7 +72,28 @@ object StyleConstants {
     // SELECTION & INTERACTION STATES
     // ═══════════════════════════════════════════════════════════════════════════
     
-    // Selected state - Subtle blue ring effect
+    // Unselected state - Reserve space for the border so selection doesn't shift layout
+    const val UNSELECTED_CONTAINER_STYLE = """
+        -fx-border-color: transparent;
+        -fx-border-width: 3;
+        -fx-border-radius: 4;
+        -fx-background-color: transparent;
+        -fx-background-radius: 4;
+        -fx-padding: 3;
+    """
+    
+    // Selected state - Prominent blue border with light blue background on container
+    const val SELECTED_CONTAINER_STYLE = """
+        -fx-border-color: ${PRIMARY_500};
+        -fx-border-width: 3;
+        -fx-border-radius: 4;
+        -fx-background-color: ${PRIMARY_100};
+        -fx-background-radius: 4;
+        -fx-padding: 3;
+        -fx-effect: dropshadow(gaussian, ${PRIMARY_400}, 10, 0.5, 0, 0);
+    """
+    
+    // Legacy selected style on ImageView (kept for reference)
     const val SELECTED_STYLE = "-fx-effect: dropshadow(gaussian, ${PRIMARY_500}, 8, 0.6, 0, 0), innershadow(gaussian, ${PRIMARY_400}, 6, 0.4, 0, 0);"
     
     // Category drag-over visual
