@@ -18,7 +18,7 @@ class ExportService {
 
     /**
      * Exports all categorized photos to the specified directory.
-     * Deletes all existing files in the directory before exporting.
+     * The target directory must be empty before exporting.
      * 
      * @param categories List of categories with photos
      * @param targetDirectory Target directory path
@@ -30,18 +30,12 @@ class ExportService {
     ): ExportResult {
         val errors = mutableListOf<String>()
         var photosCopied = 0
-        var filesDeleted = 0
 
         try {
             // Ensure target directory exists
             if (!Files.exists(targetDirectory)) {
                 Files.createDirectories(targetDirectory)
             }
-
-            // Delete all files in the directory
-            val cleanResult = cleanDirectory(targetDirectory)
-            filesDeleted = cleanResult.deletedCount
-            errors.addAll(cleanResult.errors)
 
             // Export photos from each category
             for (category in categories) {
@@ -82,7 +76,6 @@ class ExportService {
             return ExportResult(
                 success = errors.isEmpty(),
                 photosCopied = photosCopied,
-                filesDeleted = filesDeleted,
                 errors = errors
             )
 
@@ -91,7 +84,6 @@ class ExportService {
             return ExportResult(
                 success = false,
                 photosCopied = photosCopied,
-                filesDeleted = filesDeleted,
                 errors = errors
             )
         }
@@ -158,39 +150,6 @@ class ExportService {
     }
 
     /**
-     * Deletes all files in the specified directory.
-     * Does not delete subdirectories.
-     * 
-     * @param directory Directory to clean
-     * @return Number of files deleted
-     */
-    private fun cleanDirectory(directory: Path): CleanResult {
-        var deletedCount = 0
-        val errors = mutableListOf<String>()
-        
-        try {
-            Files.list(directory).use { stream ->
-                stream.forEach { path ->
-                    if (Files.isRegularFile(path)) {
-                        try {
-                            Files.delete(path)
-                            deletedCount++
-                        } catch (e: Exception) {
-                            errors.add("Failed to delete ${path.fileName}: ${e.message}")
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            errors.add("Failed to list directory ${directory}: ${e.message}")
-        }
-        
-        return CleanResult(deletedCount, errors)
-    }
-
-    private data class CleanResult(val deletedCount: Int, val errors: List<String>)
-
-    /**
      * Generates filename for a photo based on category number and position.
      * Format: 
      * - First photo: <category_4digits>.<extension> (e.g., 0005.jpg)
@@ -221,18 +180,18 @@ class ExportService {
     }
 
     /**
-     * Counts the number of files in a directory.
+     * Checks whether a directory is empty (contains no files or subdirectories).
      * 
      * @param directory Directory to check
-     * @return Number of files (not directories)
+     * @return true if the directory is empty or does not exist, false otherwise
      */
-    fun countFilesInDirectory(directory: Path): Int {
+    fun isDirectoryEmpty(directory: Path): Boolean {
         if (!Files.exists(directory)) {
-            return 0
+            return true
         }
         
         return Files.list(directory).use { stream ->
-            stream.filter { Files.isRegularFile(it) }.count().toInt()
+            !stream.findFirst().isPresent
         }
     }
 }
@@ -243,6 +202,5 @@ class ExportService {
 data class ExportResult(
     val success: Boolean,
     val photosCopied: Int,
-    val filesDeleted: Int,
     val errors: List<String> = emptyList()
 )

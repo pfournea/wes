@@ -24,13 +24,13 @@ class ExportController(private val exportService: ExportService) {
 
         val directory = chooseDirectory(primaryStage) ?: return
 
-        val existingFiles = exportService.countFilesInDirectory(directory.toPath())
-        if (existingFiles > 0) {
-            val confirmed = showConfirmDialog(
-                "Directory Warning",
-                "Directory contains $existingFiles files. All files will be deleted and replaced. Continue?"
+        if (!exportService.isDirectoryEmpty(directory.toPath())) {
+            showAlert(
+                Alert.AlertType.ERROR,
+                "Directory Not Empty",
+                "The selected directory contains files or subdirectories. Please select an empty directory."
             )
-            if (!confirmed) return
+            return
         }
 
         showExportProgress(primaryStage, directory, categories)
@@ -90,7 +90,7 @@ class ExportController(private val exportService: ExportService) {
     private fun createExportTask(categories: List<Category>, directory: File): Task<ExportResult> {
         return object : Task<ExportResult>() {
             override fun call(): ExportResult {
-                updateMessage("Deleting existing files...")
+                updateMessage("Exporting photos...")
                 updateProgress(0.0, 1.0)
 
                 val result = exportService.exportCategories(categories, directory.toPath())
@@ -123,13 +123,4 @@ class ExportController(private val exportService: ExportService) {
         }.showAndWait()
     }
 
-    private fun showConfirmDialog(title: String, content: String): Boolean {
-        val result = Alert(Alert.AlertType.WARNING).apply {
-            this.title = title
-            headerText = null
-            contentText = content
-            buttonTypes.setAll(ButtonType.OK, ButtonType.CANCEL)
-        }.showAndWait()
-        return result.isPresent && result.get() == ButtonType.OK
-    }
 }

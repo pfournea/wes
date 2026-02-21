@@ -170,122 +170,43 @@ class ExportServiceTest {
     }
 
     @Nested
-    @DisplayName("Directory Cleanup")
-    inner class DirectoryCleanupTests {
+    @DisplayName("Directory Empty Check")
+    inner class DirectoryEmptyTests {
 
         @Test
-        fun `should delete all existing files before export`() {
-            // Create some existing files in target directory
-            Files.write(tempTargetDir.resolve("old1.txt"), "old content".toByteArray())
-            Files.write(tempTargetDir.resolve("old2.jpg"), "old image".toByteArray())
-            Files.write(tempTargetDir.resolve("random.dat"), "random data".toByteArray())
-            
-            assertEquals(3, exportService.countFilesInDirectory(tempTargetDir))
-            
-            val photo = createTestPhoto("test1.jpg", 0)
-            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
-            
-            val result = exportService.exportCategories(listOf(category), tempTargetDir)
-            
-            assertTrue(result.success)
-            assertEquals(3, result.filesDeleted)
-            assertEquals(1, result.photosCopied)
-            
-            // Old files should be gone
-            assertFalse(Files.exists(tempTargetDir.resolve("old1.txt")))
-            assertFalse(Files.exists(tempTargetDir.resolve("old2.jpg")))
-            assertFalse(Files.exists(tempTargetDir.resolve("random.dat")))
-            
-            // New file should exist
-            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
-        }
-
-        @Test
-        fun `should re-export to same directory correctly`() {
-            // First export
-            val photo1 = createTestPhoto("test1.jpg", 0)
-            val category1 = Category("cat1", 1, "Category 1", mutableListOf(photo1))
-            
-            val result1 = exportService.exportCategories(listOf(category1), tempTargetDir)
-            assertTrue(result1.success)
-            assertEquals(1, result1.photosCopied)
-            
-            // Second export with different photos
-            val photo2 = createTestPhoto("test2.png", 0)
-            val photo3 = createTestPhoto("test3.jpg", 1)
-            val category2 = Category("cat1", 2, "Category 2", mutableListOf(photo2, photo3))
-            
-            val result2 = exportService.exportCategories(listOf(category2), tempTargetDir)
-            assertTrue(result2.success)
-            assertEquals(1, result2.filesDeleted) // Delete previous export
-            assertEquals(2, result2.photosCopied)
-            
-            // Old file should be gone
-            assertFalse(Files.exists(tempTargetDir.resolve("0001.jpg")))
-            
-            // New files should exist
-            assertTrue(Files.exists(tempTargetDir.resolve("0002.png")))
-            assertTrue(Files.exists(tempTargetDir.resolve("0002-01.jpg")))
-        }
-
-        @Test
-        fun `should not delete subdirectories`() {
-            // Create a subdirectory
-            val subdir = tempTargetDir.resolve("subdir")
-            Files.createDirectories(subdir)
-            Files.write(subdir.resolve("file.txt"), "content".toByteArray())
-            
-            val photo = createTestPhoto("test1.jpg", 0)
-            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
-            
-            val result = exportService.exportCategories(listOf(category), tempTargetDir)
-            
-            assertTrue(result.success)
-            // Subdirectory and its contents should still exist
-            assertTrue(Files.exists(subdir))
-            assertTrue(Files.exists(subdir.resolve("file.txt")))
-        }
-    }
-
-    @Nested
-    @DisplayName("Count Files")
-    inner class CountFilesTests {
-
-        @Test
-        fun `should count files in directory`() {
+        fun `should return false for directory with files`() {
             Files.write(tempTargetDir.resolve("file1.txt"), "content".toByteArray())
             Files.write(tempTargetDir.resolve("file2.jpg"), "content".toByteArray())
             Files.write(tempTargetDir.resolve("file3.png"), "content".toByteArray())
             
-            val count = exportService.countFilesInDirectory(tempTargetDir)
-            
-            assertEquals(3, count)
+            assertFalse(exportService.isDirectoryEmpty(tempTargetDir))
         }
 
         @Test
-        fun `should return zero for empty directory`() {
-            val count = exportService.countFilesInDirectory(tempTargetDir)
-            
-            assertEquals(0, count)
+        fun `should return true for empty directory`() {
+            assertTrue(exportService.isDirectoryEmpty(tempTargetDir))
         }
 
         @Test
-        fun `should return zero for non-existent directory`() {
+        fun `should return true for non-existent directory`() {
             val nonExistent = tempTargetDir.resolve("doesnotexist")
             
-            val count = exportService.countFilesInDirectory(nonExistent)
-            
-            assertEquals(0, count)
+            assertTrue(exportService.isDirectoryEmpty(nonExistent))
         }
 
         @Test
-        fun `should not count subdirectories`() {
+        fun `should return false for directory with subdirectories`() {
+            Files.createDirectories(tempTargetDir.resolve("subdir"))
+            
+            assertFalse(exportService.isDirectoryEmpty(tempTargetDir))
+        }
+
+        @Test
+        fun `should return false for directory with both files and subdirectories`() {
             Files.write(tempTargetDir.resolve("file1.txt"), "content".toByteArray())
             Files.createDirectories(tempTargetDir.resolve("subdir"))
             
-            val count = exportService.countFilesInDirectory(tempTargetDir)
-            
-            assertEquals(1, count) // Only the file, not the directory
+            assertFalse(exportService.isDirectoryEmpty(tempTargetDir))
         }
     }
 
