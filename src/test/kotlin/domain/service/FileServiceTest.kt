@@ -103,18 +103,52 @@ class FileServiceTest {
         }
 
         @Test
-        fun `should maintain order of photos from zip`(@TempDir tempDir: Path) {
+        fun `should sort photos alphabetically by filename`(@TempDir tempDir: Path) {
             val zipFile = tempDir.resolve("test.zip").toFile()
-            val imageFiles = listOf("a.jpg", "b.jpg", "c.jpg", "d.jpg")
-            createZipWithImages(zipFile, imageFiles)
+            createZipWithImages(zipFile, listOf("d.jpg", "b.jpg", "c.jpg", "a.jpg"))
 
             val photos = fileService.extractPhotosFromZip(zipFile)
 
             assertEquals(4, photos.size)
-            for (i in imageFiles.indices) {
-                assertEquals(imageFiles[i], photos[i].fileName)
+            val expectedOrder = listOf("a.jpg", "b.jpg", "c.jpg", "d.jpg")
+            for (i in expectedOrder.indices) {
+                assertEquals(expectedOrder[i], photos[i].fileName)
                 assertEquals(i, photos[i].originalIndex)
             }
+        }
+
+        @Test
+        fun `should sort photos case-insensitively by filename`(@TempDir tempDir: Path) {
+            val zipFile = tempDir.resolve("test.zip").toFile()
+            createZipWithImages(zipFile, listOf("C.jpg", "a.jpg", "B.jpg"))
+
+            val photos = fileService.extractPhotosFromZip(zipFile)
+
+            assertEquals(3, photos.size)
+            assertEquals("a.jpg", photos[0].fileName)
+            assertEquals("B.jpg", photos[1].fileName)
+            assertEquals("C.jpg", photos[2].fileName)
+        }
+
+        @Test
+        fun `should sort by filename only ignoring directory path`(@TempDir tempDir: Path) {
+            val zipFile = tempDir.resolve("test.zip").toFile()
+            ZipOutputStream(zipFile.outputStream()).use { zos ->
+                // b.jpg in folder1 should come AFTER a.jpg in folder2
+                zos.putNextEntry(ZipEntry("folder1/b.jpg"))
+                zos.write("image1".toByteArray())
+                zos.closeEntry()
+
+                zos.putNextEntry(ZipEntry("folder2/a.jpg"))
+                zos.write("image2".toByteArray())
+                zos.closeEntry()
+            }
+
+            val photos = fileService.extractPhotosFromZip(zipFile)
+
+            assertEquals(2, photos.size)
+            assertEquals("a.jpg", photos[0].fileName)
+            assertEquals("b.jpg", photos[1].fileName)
         }
 
         @Test

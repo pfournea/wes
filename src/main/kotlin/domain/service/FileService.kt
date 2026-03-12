@@ -35,9 +35,10 @@ class FileService {
             }
         }
 
-        return imageFiles.mapIndexed { index, path ->
-            Photo.fromPath(path, index)
-        }
+        return imageFiles.sortedBy { it.fileName.toString().lowercase() }
+            .mapIndexed { index, path ->
+                Photo.fromPath(path, index)
+            }
     }
 
     fun isImageFile(filename: String): Boolean {
