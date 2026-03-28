@@ -5,8 +5,10 @@ import javafx.animation.ScaleTransition
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.control.Button
+import javafx.scene.control.Label
 import javafx.scene.image.ImageView
 import javafx.scene.layout.StackPane
+import javafx.scene.layout.VBox
 import javafx.util.Duration
 import util.Icons
 import util.StyleConstants
@@ -26,34 +28,58 @@ class PhotoCard(
     private val rotateLeftButton = Button(Icons.ROTATE_LEFT)
     private val rotateRightButton = Button(Icons.ROTATE_RIGHT)
     private var isInCategoryView = isInCategory
-    val container = StackPane()
+    val container = VBox()
+    private val imageContainer = StackPane()
+    private val fileNameLabel = Label(photo.fileName)
 
     init {
         setupContainer()
     }
 
     private fun setupContainer() {
-        container.children.add(imageView)
+        setupFileNameLabel()
+        
+        imageContainer.children.add(imageView)
+        
+        container.children.add(imageContainer)
+        container.children.add(fileNameLabel)
+        
+        container.alignment = Pos.TOP_CENTER
+        container.spacing = 4.0
         
         container.maxWidthProperty().bind(imageView.fitWidthProperty())
         
         imageView.imageProperty().addListener { _, _, newImage ->
             if (newImage != null && imageView.isPreserveRatio) {
                 val aspectRatio = newImage.height / newImage.width
-                container.maxHeight = imageView.fitWidth * aspectRatio
+                imageContainer.maxHeight = imageView.fitWidth * aspectRatio
             }
         }
         
         imageView.image?.let { image ->
             if (imageView.isPreserveRatio) {
                 val aspectRatio = image.height / image.width
-                container.maxHeight = imageView.fitWidth * aspectRatio
+                imageContainer.maxHeight = imageView.fitWidth * aspectRatio
             }
         }
 
         setupRotationControls()
         setupDeleteButton()
         setupHoverEffects()
+    }
+
+    private fun setupFileNameLabel() {
+        fileNameLabel.style = """
+            -fx-font-size: ${StyleConstants.FONT_SIZE_BASE};
+            -fx-font-weight: bold;
+            -fx-text-fill: ${StyleConstants.TEXT_SECONDARY};
+            -fx-padding: 4 4 0 4;
+            -fx-text-overflow: ellipsis;
+            -fx-max-width: ${StyleConstants.PHOTO_GRID_WIDTH};
+            -fx-alignment: center;
+        """.trimIndent()
+        fileNameLabel.isWrapText = false
+        fileNameLabel.maxWidthProperty().bind(imageView.fitWidthProperty())
     }
 
     private fun setupRotationControls() {
@@ -87,7 +113,7 @@ class PhotoCard(
             animateButtonScale(rotateRightButton, 1.0)
         }
 
-        container.children.addAll(rotateLeftButton, rotateRightButton)
+        imageContainer.children.addAll(rotateLeftButton, rotateRightButton)
     }
 
     private fun setupDeleteButton() {
@@ -107,7 +133,7 @@ class PhotoCard(
             animateButtonScale(deleteButton, 1.0)
         }
         
-        container.children.add(deleteButton)
+        imageContainer.children.add(deleteButton)
     }
 
     private fun buildControlButtonStyle(isHovered: Boolean): String {
@@ -151,7 +177,7 @@ class PhotoCard(
     }
 
     private fun setupHoverEffects() {
-        container.setOnMouseEntered {
+        imageContainer.setOnMouseEntered {
             rotateLeftButton.isVisible = true
             rotateRightButton.isVisible = true
             if (isInCategoryView) {
@@ -159,7 +185,7 @@ class PhotoCard(
             }
         }
 
-        container.setOnMouseExited {
+        imageContainer.setOnMouseExited {
             rotateLeftButton.isVisible = false
             rotateRightButton.isVisible = false
             deleteButton.isVisible = false
