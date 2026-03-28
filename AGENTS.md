@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-01-31
+**Generated:** 2026-03-28
 **Commit:** 116efc1
 **Branch:** main
 
@@ -17,11 +17,12 @@ wes/
 │   ├── domain/
 │   │   ├── model/                 # Photo, Category, Selection (data classes)
 │   │   └── service/               # PhotoService, CategoryService, SelectionService,
-│   │                              # FileService, ExportService, RotationService
+│   │                              # FileService, ExportService, RotationService, CopyService
 │   ├── ui/
 │   │   ├── PhotoCategorizerApp.kt # Main app, orchestrates all components
 │   │   ├── component/             # CategoryCard, PhotoCard, ButtonFactory,
-│   │   │                          # AddCategoryDialog, HelpDialog
+│   │   │                          # AddCategoryDialog, HelpDialog, PhotoMagnifierDialog,
+│   │   │                          # CopyPhotosDialog
 │   │   ├── controller/            # Layout, PhotoGrid, Category, Upload, Export
 │   │   └── handler/               # DragDrop, Selection, ReorderDragDrop
 │   └── util/                      # ImageCache, ImageUtils, StyleConstants, Icons
@@ -73,8 +74,9 @@ ZIP → FileService.extractPhotosFromZip() → PhotoService.setPhotos()
 Drag to category → DragDropHandler → CategoryService.addPhotoToCategory() + PhotoService.removePhoto()
 Reorder in category → ReorderDragDropHandler → CategoryService.reorderPhotoInCategory()
 Rotate photo → RotationService.rotateClockwise/CounterClockwise() → updates Photo.rotationDegrees
+Copy photos → CopyService.copyPhotosToCategories() → range syntax: "5-10", "1,3,5", "2-4,8,10-12"
 Delete category → PhotoService.restorePhotos() (sorted by originalIndex)
-Export → ExportService.exportCategories() → copies to category subdirs
+Export → ExportService.exportCategories() → filename: 0005.jpg (first), 0005-01.jpg (others)
 ```
 
 ## COMMANDS
@@ -100,9 +102,9 @@ Export → ExportService.exportCategories() → copies to category subdirs
 - **JVM 21 required**: Toolchain enforced in build.gradle.kts
 - **Module exports**: Extensive --add-exports for JavaFX internals in tests
 - **Dual photo existence**: Photos in PhotoService (grid) AND CategoryService (organization)
-- **Destructive export**: ExportService clears target dirs before writing
+- **Export filename**: First photo: `0005.jpg`, others: `0005-01.jpg`, `0005-02.jpg`
 - **Photo ID format**: `${originalIndex}_${filename}` for uniqueness
 - **Photo rotation**: Photo.rotationDegrees stores 0/90/180/270, RotationService handles transforms
 - **Design system**: StyleConstants uses enterprise palette (PRIMARY_*, NEUTRAL_*, etc.)
 - **Unicode icons**: Icons.kt provides consistent icons without external deps
-- **Cross-platform packaging**: org.beryx.runtime plugin creates native installers
+- **Copy ranges**: Syntax supports "5-10", "1,3,5", "2-4,8,10-12"
