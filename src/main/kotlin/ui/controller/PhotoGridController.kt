@@ -11,6 +11,7 @@ import javafx.scene.control.Label
 import javafx.scene.image.ImageView
 import javafx.scene.layout.TilePane
 import ui.component.PhotoCard
+import ui.component.PhotoMagnifierDialog
 import ui.handler.DragDropHandler
 import ui.handler.ReorderDragDropHandler
 import ui.handler.SelectionHandler
@@ -68,6 +69,7 @@ class PhotoGridController(
                     onDeleteRequested = { handlePhotoDelete(photo, latestCategory) },
                     onRotateLeft = { handleRotateLeft(photo, latestCategory) },
                     onRotateRight = { handleRotateRight(photo, latestCategory) },
+                    onMagnifyRequested = { showMagnifier(photo) },
                     isInCategory = true
                 )
                 photoCards[imageView] = photoCard
@@ -78,6 +80,7 @@ class PhotoGridController(
                     photo = photo,
                     onRotateLeft = { handleRotateLeft(photo, null) },
                     onRotateRight = { handleRotateRight(photo, null) },
+                    onMagnifyRequested = { showMagnifier(photo) },
                     isInCategory = false
                 )
                 photoCards[imageView] = photoCard
@@ -159,6 +162,11 @@ class PhotoGridController(
         }
     }
 
+    private fun showMagnifier(photo: Photo) {
+        val dialog = PhotoMagnifierDialog(photo)
+        dialog.showAndWait()
+    }
+
     fun setupImageViewHandlers(imageView: ImageView) {
         imageView.setOnMouseClicked { event ->
             selectionHandler.handleImageClick(event, imageView)
@@ -198,6 +206,7 @@ class PhotoGridController(
                     onDeleteRequested = { /* Will be handled if in category */ },
                     onRotateLeft = { handleRotateLeft(photo, currentCategory) },
                     onRotateRight = { handleRotateRight(photo, currentCategory) },
+                    onMagnifyRequested = { showMagnifier(photo) },
                     isInCategory = currentCategory != null
                 )
                 photoCards[imageView] = photoCard

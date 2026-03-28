@@ -32,6 +32,9 @@ object Icons {
     // Rotation
     const val ROTATE_LEFT = "↺"     // Rotate counter-clockwise
     const val ROTATE_RIGHT = "↻"    // Rotate clockwise
+
+    // Zoom
+    const val MAGNIFY = "🔍"        // Magnify/Zoom in
     
     // Status
     const val INFO = "ℹ"            // Information

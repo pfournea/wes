@@ -22,11 +22,13 @@ class PhotoCard(
     private val onDeleteRequested: () -> Unit = {},
     private val onRotateLeft: () -> Unit = {},
     private val onRotateRight: () -> Unit = {},
+    private val onMagnifyRequested: () -> Unit = {},
     isInCategory: Boolean = false
 ) {
     private val deleteButton = Button(Icons.REMOVE)
     private val rotateLeftButton = Button(Icons.ROTATE_LEFT)
     private val rotateRightButton = Button(Icons.ROTATE_RIGHT)
+    private val magnifyButton = Button(Icons.MAGNIFY)
     private var isInCategoryView = isInCategory
     val container = VBox()
     private val imageContainer = StackPane()
@@ -63,6 +65,7 @@ class PhotoCard(
             }
         }
 
+        setupMagnifyButton()
         setupRotationControls()
         setupDeleteButton()
         setupHoverEffects()
@@ -80,6 +83,25 @@ class PhotoCard(
         """.trimIndent()
         fileNameLabel.isWrapText = false
         fileNameLabel.maxWidthProperty().bind(imageView.fitWidthProperty())
+    }
+
+    private fun setupMagnifyButton() {
+        magnifyButton.style = buildControlButtonStyle(false)
+        magnifyButton.isVisible = false
+        magnifyButton.setOnAction { onMagnifyRequested() }
+        StackPane.setAlignment(magnifyButton, Pos.TOP_LEFT)
+        StackPane.setMargin(magnifyButton, Insets(8.0, 0.0, 0.0, 8.0))
+
+        magnifyButton.setOnMouseEntered {
+            magnifyButton.style = buildControlButtonStyle(true)
+            animateButtonScale(magnifyButton, 1.1)
+        }
+        magnifyButton.setOnMouseExited {
+            magnifyButton.style = buildControlButtonStyle(false)
+            animateButtonScale(magnifyButton, 1.0)
+        }
+
+        imageContainer.children.add(magnifyButton)
     }
 
     private fun setupRotationControls() {
@@ -178,6 +200,7 @@ class PhotoCard(
 
     private fun setupHoverEffects() {
         imageContainer.setOnMouseEntered {
+            magnifyButton.isVisible = true
             rotateLeftButton.isVisible = true
             rotateRightButton.isVisible = true
             if (isInCategoryView) {
@@ -186,6 +209,7 @@ class PhotoCard(
         }
 
         imageContainer.setOnMouseExited {
+            magnifyButton.isVisible = false
             rotateLeftButton.isVisible = false
             rotateRightButton.isVisible = false
             deleteButton.isVisible = false
