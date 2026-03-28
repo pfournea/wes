@@ -73,6 +73,7 @@ class PhotoGridControllerTest : ApplicationTest() {
 
         reorderDragDropHandler = ReorderDragDropHandler(
             categoryService,
+            photoService,
             sharedImageViews
         ) {
             photoGridController.updateImageDisplay()

@@ -71,4 +71,23 @@ class PhotoService {
         photos[index] = updatedPhoto
         return updatedPhoto
     }
+
+    /**
+     * Reorders a photo in the collection.
+     * 
+     * @param photoId Photo ID to reorder
+     * @param newPosition New position in the list
+     * @return true if reorder was successful
+     */
+    fun reorderPhoto(photoId: String, newPosition: Int): Boolean {
+        val currentIndex = photos.indexOfFirst { it.id == photoId }
+        if (currentIndex == -1) return false
+        if (newPosition < 0 || newPosition > photos.size) return false
+        if (currentIndex == newPosition) return true
+
+        val photo = photos.removeAt(currentIndex)
+        val adjustedPosition = if (newPosition > currentIndex) newPosition - 1 else newPosition
+        photos.add(adjustedPosition.coerceIn(0, photos.size), photo)
+        return true
+    }
 }

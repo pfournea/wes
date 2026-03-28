@@ -174,6 +174,7 @@ class PhotoCategorizerApp : Application() {
 
         reorderDragDropHandler = ReorderDragDropHandler(
             categoryService,
+            photoService,
             sharedImageViews
         ) {
             val selectedCategory = categoryController.getSelectedCategory()

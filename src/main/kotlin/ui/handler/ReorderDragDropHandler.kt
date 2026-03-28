@@ -2,6 +2,7 @@ package ui.handler
 
 import domain.model.Category
 import domain.service.CategoryService
+import domain.service.PhotoService
 import javafx.geometry.Bounds
 import javafx.scene.effect.DropShadow
 import javafx.scene.image.ImageView
@@ -14,6 +15,7 @@ import util.StyleConstants
 
 class ReorderDragDropHandler(
     private val categoryService: CategoryService,
+    private val photoService: PhotoService,
     private val imageViews: MutableList<ImageView>,
     private val onReorderComplete: () -> Unit
 ) {
@@ -21,6 +23,16 @@ class ReorderDragDropHandler(
     private var originalEffectOfIndicatorNode: javafx.scene.effect.Effect? = null
 
     fun handleDragOver(event: DragEvent, imageContainer: TilePane, category: Category) {
+        if (event.dragboard.hasString() && isValidDragSource(event)) {
+            event.acceptTransferModes(TransferMode.MOVE)
+            
+            val targetIndex = calculateDropIndex(event, imageContainer)
+            updateDropIndicator(targetIndex, imageContainer)
+        }
+        event.consume()
+    }
+
+    fun handleDragOver(event: DragEvent, imageContainer: TilePane) {
         if (event.dragboard.hasString() && isValidDragSource(event)) {
             event.acceptTransferModes(TransferMode.MOVE)
             
@@ -54,6 +66,33 @@ class ReorderDragDropHandler(
         photoIdsToReorder.forEach { photoId ->
             val latestCategory = categoryService.getCategoryById(category.id) ?: return@forEach
             if (categoryService.reorderPhotoInCategory(photoId, latestCategory, targetIndex)) {
+                success = true
+            }
+        }
+        
+        if (success) {
+            onReorderComplete()
+        }
+        
+        clearDropIndicator()
+        return success
+    }
+
+    fun handleDragDropped(event: DragEvent, imageContainer: TilePane): Boolean {
+        val dragboard = event.dragboard
+        if (!dragboard.hasString()) return false
+        
+        val indices = dragboard.string.split(",").mapNotNull { it.toIntOrNull() }
+        if (indices.isEmpty()) return false
+        
+        val targetIndex = calculateDropIndex(event, imageContainer)
+        
+        var success = false
+        for (index in indices) {
+            val imageView = imageViews.getOrNull(index) ?: continue
+            val photoId = ImageUtils.getPhotoId(imageView) ?: continue
+            
+            if (photoService.reorderPhoto(photoId, targetIndex)) {
                 success = true
             }
         }

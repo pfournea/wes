@@ -103,9 +103,17 @@ class PhotoGridController(
                 reorderDragDropHandler.handleDragExited(event, imageContainer)
             }
         } else {
-            imageContainer.onDragOver = null
-            imageContainer.onDragDropped = null
-            imageContainer.onDragExited = null
+            imageContainer.setOnDragOver { event ->
+                reorderDragDropHandler.handleDragOver(event, imageContainer)
+            }
+            imageContainer.setOnDragDropped { event ->
+                reorderDragDropHandler.handleDragDropped(event, imageContainer)
+                event.isDropCompleted = true
+                event.consume()
+            }
+            imageContainer.setOnDragExited { event ->
+                reorderDragDropHandler.handleDragExited(event, imageContainer)
+            }
         }
 
         updateImageDisplay()
