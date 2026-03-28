@@ -414,5 +414,31 @@ class PhotoServiceTest {
             assertEquals(photoB, photoService.getPhotoByIndex(1))
             assertEquals(photoC, photoService.getPhotoByIndex(2))
         }
+
+        @Test
+        fun `should not restore photos that are already in the pool`() {
+            val photo1Copy = photo1.copy(id = "0_2_12345")
+            val photo2Copy = photo2.copy(id = "1_3_67890")
+            
+            photoService.setPhotos(listOf(photo1, photo2, photo3))
+            
+            photoService.restorePhotos(listOf(photo1Copy, photo2Copy, photo3))
+
+            assertEquals(3, photoService.getPhotoCount())
+        }
+
+        @Test
+        fun `should restore only new photos when some already exist`() {
+            val photo1Copy = photo1.copy(id = "0_2_12345")
+            val photo4 = Photo.fromPath(Paths.get("/test/photo4.jpg"), 3)
+            
+            photoService.setPhotos(listOf(photo1, photo2, photo3))
+            
+            photoService.restorePhotos(listOf(photo1Copy, photo4))
+
+            assertEquals(4, photoService.getPhotoCount())
+            assertTrue(photoService.getPhotos().any { it.originalIndex == 0 })
+            assertTrue(photoService.getPhotos().any { it.originalIndex == 3 })
+        }
     }
 }

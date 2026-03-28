@@ -39,7 +39,13 @@ class PhotoService {
 
     fun restorePhotos(photosToRestore: List<Photo>) {
         if (photosToRestore.isEmpty()) return
-        photos.addAll(photosToRestore)
+        
+        val existingOriginalIndices = photos.map { it.originalIndex }.toSet()
+        val newPhotos = photosToRestore.filter { it.originalIndex !in existingOriginalIndices }
+        
+        if (newPhotos.isEmpty()) return
+        
+        photos.addAll(newPhotos)
         val sorted = photos.sortedBy { it.originalIndex }
         photos.clear()
         photos.addAll(sorted)
