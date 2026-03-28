@@ -99,34 +99,65 @@ class HelpDialog : Dialog<Void?>() {
             """.trimIndent()),
             
             createSection("8. Foto's Roteren", """
-                • Beweeg de muis over een foto om de rotatie-knoppen te zien
-                • Klik op ↺ om de foto 90° naar links te draaien
-                • Klik op ↻ om de foto 90° naar rechts te draaien
-                • De rotatie wordt toegepast bij het exporteren
-            """.trimIndent()),
-            
-            createSection("9. Exporteren", """
-                • Klik op "Export" in de bovenste werkbalk
-                • Kies een bestemmingsmap voor de geëxporteerde foto's
-                • Foto's worden opgeslagen met de volgende naamgeving:
-                  [categorienummer]_[positie in 5 cijfers].[extensie]
-                • Voorbeelden: 1_00001.jpg, 1_00002.jpg, 2_00001.png
-                • Alleen gecategoriseerde foto's worden geëxporteerd
-            """.trimIndent()),
-            
-            createSection("Sneltoetsen Overzicht", """
-                • Klik: Selecteer één foto
-                • Ctrl + Klik: Meerdere foto's selecteren/deselecteren
-                • Shift + Klik: Selecteer een reeks foto's
-                • Slepen: Verplaats foto's naar een categorie
-            """.trimIndent()),
-            
-            createSection("Tips", """
-                • Maak eerst alle benodigde categorieën aan voordat u begint met sorteren
-                • Gebruik Shift + Klik voor het snel selecteren van opeenvolgende foto's
-                • Bekijk een categorie regelmatig om de volgorde te controleren
-                • Foto's kunnen altijd terug naar de hoofdverzameling worden gehaald
-            """.trimIndent())
+                 • Beweeg de muis over een foto om de rotatie-knoppen te zien
+                 • Klik op ↺ om de foto 90° naar links te draaien
+                 • Klik op ↻ om de foto 90° naar rechts te draaien
+                 • Klik op ⟲ om de rotatie terug te zetten naar 0°
+                 • De rotatie wordt toegepast bij het exporteren
+             """.trimIndent()),
+             
+             createSection("9. Foto's Vergroten (Magnifier)", """
+                 • Beweeg de muis over een foto om het vergrootglas-icoon (🔍) te zien
+                 • Klik erop om een volledig formaat voorbeeld in een donkere dialoog te bekijken
+                 • Sluit de dialoog met de X-knop in de hoek of klik buiten de voorbeeld
+                 • Handig voor het controleren van details en scherheid van foto's
+             """.trimIndent()),
+             
+             createSection("10. Foto's Kopiëren (Geavanceerd)", """
+                 • Beweeg de muis over een categorie om het kopieerpictogram (⧉) te zien
+                 • Klik erop om de kopieerdialoog te openen
+                 • Selecteer doelcategorieën of voer bereiken in
+                 • Ondersteunde bereikformaten:
+                   - Enkel: 5 of 10
+                   - Bereik: 5-10 (betekent categorieën 5 tot en met 10)
+                   - Meerdere: 1,3,5 of 2-4,8,10-12 (gemengde selectie)
+                 • Foto's worden gekopieerd (niet verplaatst)
+                 • Bron-categorie blijft ongewijzigd
+                 • Gekopieerde foto's worden achteraan in de doelcategorie geplaatst
+             """.trimIndent()),
+             
+             createSection("11. Exporteren", """
+                 • Klik op "Export" in de bovenste werkbalk
+                 • Kies een bestemmingsmap voor de geëxporteerde foto's
+                 • Foto's worden opgeslagen met de volgende naamgeving:
+                   - Eerste foto in categorie: [categorienummer in 4 cijfers].[extensie]
+                   - Overige foto's: [categorienummer in 4 cijfers]-[positie in 2 cijfers].[extensie]
+                 • Voorbeelden:
+                   - Eerste foto categorie 5: 0005.jpg
+                   - Tweede foto categorie 5: 0005-01.jpg
+                   - Derde foto categorie 5: 0005-02.jpg
+                   - Eerste foto categorie 12: 0012.png
+                 • Alleen gecategoriseerde foto's worden geëxporteerd
+                 • Alle rotaties worden in de geëxporteerde foto's opgeslagen
+             """.trimIndent()),
+             
+             createSection("Sneltoetsen Overzicht", """
+                 • Klik: Selecteer één foto
+                 • Ctrl + Klik: Meerdere foto's selecteren/deselecteren
+                 • Shift + Klik: Selecteer een reeks foto's
+                 • Slepen: Verplaats foto's naar een categorie
+                 • Slepen in categorie: Wijzig volgorde van foto's in categorie
+             """.trimIndent()),
+             
+             createSection("Tips", """
+                 • Maak eerst alle benodigde categorieën aan voordat u begint met sorteren
+                 • Gebruik Shift + Klik voor het snel selecteren van opeenvolgende foto's
+                 • Bekijk een categorie regelmatig om de volgorde te controleren
+                 • Foto's kunnen altijd terug naar de hoofdverzameling worden gehaald
+                 • Gebruik de magnifier (🔍) om scherpte en details van foto's te controleren
+                 • Gebruik de kopieerfunctie (⧉) om dezelfde foto's in meerdere categorieën te organiseren
+                 • Voer altijd een testexport uit naar een lege map voordat u de definitieve export doet
+             """.trimIndent())
         )
 
         return ScrollPane(contentBox).apply {

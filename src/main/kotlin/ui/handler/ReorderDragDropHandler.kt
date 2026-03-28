@@ -51,19 +51,28 @@ class ReorderDragDropHandler(
         
         val currentCategory = categoryService.getCategoryById(category.id) ?: return false
         
-        val photoIdsToReorder = indices.mapNotNull { index ->
-            imageViews.getOrNull(index)?.let { iv ->
-                val photoId = ImageUtils.getPhotoId(iv)
-                photoId?.takeIf { id -> currentCategory.photos.any { p -> p.id == id } }
-            }
-        }
-        
-        if (photoIdsToReorder.isEmpty()) return false
-        
         val targetIndex = calculateDropIndex(event, imageContainer)
         
+        val photoIdsWithIndex = indices.mapNotNull { index ->
+            imageViews.getOrNull(index)?.let { iv ->
+                val photoId = ImageUtils.getPhotoId(iv)
+                photoId?.takeIf { id -> currentCategory.photos.any { p -> p.id == id } }?.let { id -> index to id }
+            }
+        }.toMutableList()
+        
+        if (photoIdsWithIndex.isEmpty()) return false
+        
         var success = false
-        photoIdsToReorder.forEach { photoId ->
+        val photosMovingForward = photoIdsWithIndex.filter { it.first < targetIndex }
+        val photosMovingBackward = photoIdsWithIndex.filter { it.first >= targetIndex }
+        
+        photosMovingForward.sortedBy { it.first }.forEach { (index, photoId) ->
+            val latestCategory = categoryService.getCategoryById(category.id) ?: return@forEach
+            if (categoryService.reorderPhotoInCategory(photoId, latestCategory, targetIndex)) {
+                success = true
+            }
+        }
+        photosMovingBackward.sortedBy { it.first }.forEach { (index, photoId) ->
             val latestCategory = categoryService.getCategoryById(category.id) ?: return@forEach
             if (categoryService.reorderPhotoInCategory(photoId, latestCategory, targetIndex)) {
                 success = true
@@ -87,11 +96,22 @@ class ReorderDragDropHandler(
         
         val targetIndex = calculateDropIndex(event, imageContainer)
         
+        val photosWithIndex = indices.mapNotNull { index ->
+            imageViews.getOrNull(index)?.let { iv ->
+                ImageUtils.getPhotoId(iv)?.let { id -> index to id }
+            }
+        }.toMutableList()
+        
         var success = false
-        for (index in indices) {
-            val imageView = imageViews.getOrNull(index) ?: continue
-            val photoId = ImageUtils.getPhotoId(imageView) ?: continue
-            
+        val photosMovingForward = photosWithIndex.filter { it.first < targetIndex }
+        val photosMovingBackward = photosWithIndex.filter { it.first >= targetIndex }
+        
+        photosMovingForward.sortedBy { it.first }.forEach { (_, photoId) ->
+            if (photoService.reorderPhoto(photoId, targetIndex)) {
+                success = true
+            }
+        }
+        photosMovingBackward.sortedBy { it.first }.forEach { (_, photoId) ->
             if (photoService.reorderPhoto(photoId, targetIndex)) {
                 success = true
             }
