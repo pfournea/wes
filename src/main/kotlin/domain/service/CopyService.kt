@@ -37,20 +37,25 @@ class CopyService(
 
         val errors = mutableListOf<String>()
         var categoriesUpdated = 0
+        var photosCopied = 0
 
         for (targetCategory in targetCategories) {
             if (targetCategory.id == sourceCategory.id) continue
 
-            sourceCategory.photos.forEachIndexed { index, photo ->
-                val result = categoryService.copyPhotoToCategory(photo, targetCategory, index)
+            var copiedToThisCategory = 0
+            for (photo in sourceCategory.photos) {
+                val result = categoryService.copyPhotoToCategory(photo, targetCategory)
                 if (result == null) {
                     errors.add("Failed to copy photo to ${targetCategory.name}")
+                } else {
+                    copiedToThisCategory++
                 }
             }
-            categoriesUpdated++
+            if (copiedToThisCategory > 0) {
+                categoriesUpdated++
+                photosCopied += copiedToThisCategory
+            }
         }
-
-        val photosCopied = sourceCategory.photos.size * targetCategories.size
 
         return CopyResult(
             success = errors.isEmpty(),
