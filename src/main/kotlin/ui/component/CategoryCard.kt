@@ -20,7 +20,8 @@ import util.StyleConstants
 class CategoryCard(
     category: Category,
     private val onDeleteRequested: () -> Unit = {},
-    private val onSelectionChanged: (Boolean) -> Unit = {}
+    private val onSelectionChanged: (Boolean) -> Unit = {},
+    private val onCopyRequested: () -> Unit = {}
 ) : VBox() {
 
     private var category: Category = category
@@ -28,8 +29,10 @@ class CategoryCard(
     private val nameLabel = Label(category.name)
     private val selectButton = Button(Icons.VIEW)
     private val deleteButton = Button(Icons.REMOVE)
+    private val copyButton = Button(Icons.COPY)
     private val photoCountBadge = Label()
     private val thumbnailContainer = StackPane()
+    private val contextMenu = ContextMenu()
     
     private var selected = false
 
@@ -53,11 +56,13 @@ class CategoryCard(
 
         setOnMouseEntered {
             deleteButton.opacity = 1.0
+            copyButton.opacity = 1.0
             animateCardElevation(true)
         }
 
         setOnMouseExited {
             deleteButton.opacity = 0.0
+            copyButton.opacity = 0.0
             animateCardElevation(false)
         }
     }
@@ -96,10 +101,23 @@ class CategoryCard(
             animateButtonScale(deleteButton, 1.0)
         }
 
+        copyButton.style = buildIconButtonStyle(StyleConstants.PRIMARY_500, false)
+        copyButton.opacity = 0.0
+        copyButton.setOnAction { onCopyRequested() }
+        
+        copyButton.setOnMouseEntered {
+            copyButton.style = buildIconButtonStyle(StyleConstants.PRIMARY_600, true)
+            animateButtonScale(copyButton, 1.05)
+        }
+        copyButton.setOnMouseExited {
+            copyButton.style = buildIconButtonStyle(StyleConstants.PRIMARY_500, false)
+            animateButtonScale(copyButton, 1.0)
+        }
+
         val spacer = Region()
         HBox.setHgrow(spacer, Priority.ALWAYS)
 
-        headerBox.children.addAll(nameLabel, spacer, selectButton, deleteButton)
+        headerBox.children.addAll(nameLabel, spacer, selectButton, copyButton, deleteButton)
         children.add(headerBox)
     }
 

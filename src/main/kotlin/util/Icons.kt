@@ -52,6 +52,7 @@ object Icons {
     const val CATEGORY = "▣"        // Category
     const val TAG = "◈"             // Tag/Label
     const val ORGANIZE = "⊟"        // Organize
+    const val COPY = "⧉"            // Copy/Duplicate
     
     // Miscellaneous
     const val SETTINGS = "⚙"        // Settings/Gear

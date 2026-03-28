@@ -149,6 +149,35 @@ class CategoryService {
     }
 
     /**
+     * Copies a photo to a category without removing it from the source.
+     * Creates a copy of the photo with a new unique ID.
+     * 
+     * @param photo Photo to copy
+     * @param category Target category
+     * @param position Position in target category (null = append)
+     * @return Updated category or null if not found
+     */
+    fun copyPhotoToCategory(photo: Photo, category: Category, position: Int? = null): Category? {
+        val index = categories.indexOfFirst { it.id == category.id }
+        if (index == -1) return null
+
+        val copiedPhoto = photo.copy(id = "${photo.originalIndex}_${category.number}_${System.nanoTime()}")
+        
+        val currentCategory = categories[index]
+        val newPhotos = currentCategory.photos.toMutableList()
+        
+        if (position != null && position in 0..newPhotos.size) {
+            newPhotos.add(position, copiedPhoto)
+        } else {
+            newPhotos.add(copiedPhoto)
+        }
+        
+        val updatedCategory = currentCategory.copy(photos = newPhotos)
+        categories[index] = updatedCategory
+        return updatedCategory
+    }
+
+    /**
      * Updates a photo's rotation within a category.
      * 
      * @param photoId Photo ID to update

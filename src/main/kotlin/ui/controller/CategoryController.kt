@@ -2,10 +2,12 @@ package ui.controller
 
 import domain.model.Category
 import domain.service.CategoryService
+import domain.service.CopyService
 import domain.service.PhotoService
 import javafx.scene.layout.TilePane
 import ui.component.CategoryCard
 import ui.component.AddCategoryDialog
+import ui.component.CopyPhotosDialog
 import ui.handler.DragDropHandler
 
 class CategoryController(
@@ -18,6 +20,7 @@ class CategoryController(
 ) {
     private val categoryCardMap = mutableMapOf<String, CategoryCard>()
     private var selectedCategory: Category? = null
+    private val copyService = CopyService(categoryService)
 
     fun addCategory() {
         val dialog = AddCategoryDialog()
@@ -32,21 +35,75 @@ class CategoryController(
             )
 
             categories.forEach { category ->
-                lateinit var categoryCard: CategoryCard
-
-                categoryCard = CategoryCard(
-                    category = category,
-                    onDeleteRequested = { deleteCategory(category) },
-                    onSelectionChanged = { isSelected -> handleCategorySelection(category, categoryCard, isSelected) }
-                )
-
-                categoryCardMap[category.id] = categoryCard
-                setupCategoryCardDragHandlers(categoryCard, category)
-                categoryContainer.children.add(categoryCard)
+                addCategoryCard(category)
             }
             
             sortCategoryCards()
         }
+    }
+
+    private fun addCategoryCard(category: Category) {
+        lateinit var categoryCard: CategoryCard
+
+        categoryCard = CategoryCard(
+            category = category,
+            onDeleteRequested = { deleteCategory(category) },
+            onSelectionChanged = { isSelected -> handleCategorySelection(category, categoryCard, isSelected) },
+            onCopyRequested = { showCopyDialog(category) }
+        )
+
+        categoryCardMap[category.id] = categoryCard
+        setupCategoryCardDragHandlers(categoryCard, category)
+        categoryContainer.children.add(categoryCard)
+    }
+
+    private fun showCopyDialog(category: Category) {
+        val dialog = CopyPhotosDialog(
+            sourceCategory = category,
+            allCategories = categoryService.getCategories(),
+            copyService = copyService,
+            onCategoriesCreated = { newCategories ->
+                for (newCat in newCategories) {
+                    if (categoryService.getCategoryById(newCat.id) == null) {
+                        categoryService.createCategories(newCat.number, 1)
+                    }
+                }
+                refreshAllCategoryCards()
+            },
+            getFreshCategories = { categoryService.getCategories() }
+        )
+
+        val result = dialog.showAndWait()
+        result.ifPresent { copyResult ->
+            if (copyResult.success) {
+                refreshAllCategoryCards()
+            }
+        }
+    }
+
+    private fun refreshAllCategoryCards() {
+        val categories = categoryService.getCategories()
+        
+        val existingIds = categoryCardMap.keys.toSet()
+        val currentIds = categories.map { it.id }.toSet()
+        
+        val toRemove = existingIds - currentIds
+        for (id in toRemove) {
+            categoryCardMap.remove(id)
+            categoryContainer.children.removeIf { 
+                it is CategoryCard && it.getCategory().id == id 
+            }
+        }
+
+        for (category in categories) {
+            if (categoryCardMap.containsKey(category.id)) {
+                categoryCardMap[category.id]?.updateCategory(category)
+            } else {
+                addCategoryCard(category)
+            }
+        }
+        
+        sortCategoryCards()
     }
     
     private fun sortCategoryCards() {
