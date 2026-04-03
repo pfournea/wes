@@ -10,6 +10,9 @@ repositories {
 }
 
 dependencies {
+    // EXIF metadata reading for proper image orientation
+    implementation("com.drewnoakes:metadata-extractor:2.19.0")
+    
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     

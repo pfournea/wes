@@ -59,10 +59,10 @@ class ExportService {
                         val targetFile = targetDirectory.resolve(newFilename)
                         
                         if (photo.rotationDegrees == 0) {
-                            // No rotation - simple copy
-                            Files.copy(photo.path, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                            // No rotation - strip EXIF and copy
+                            stripExifAndCopy(photo.path, targetFile)
                         } else {
-                            // Rotation needed - load, rotate, and save
+                            // Rotation needed - load, rotate, and save (EXIF will be stripped)
                             saveRotatedImage(photo.path, targetFile, photo.rotationDegrees, extension)
                         }
                         
@@ -90,7 +90,34 @@ class ExportService {
     }
 
     /**
+     * Strips EXIF orientation data from an image and copies it.
+     * This ensures exported images don't have conflicting EXIF orientation tags.
+     * 
+     * @param sourcePath Source image path
+     * @param targetPath Target save path
+     */
+    private fun stripExifAndCopy(sourcePath: Path, targetPath: Path) {
+        // Read the image (strips EXIF)
+        val bufferedImage = ImageIO.read(sourcePath.toFile())
+            ?: throw IllegalArgumentException("Failed to read image: $sourcePath")
+        
+        // Determine format from extension
+        val extension = sourcePath.fileName.toString().substringAfterLast('.', "")
+        val format = when (extension.lowercase()) {
+            "jpg", "jpeg" -> "jpg"
+            "png" -> "png"
+            "gif" -> "gif"
+            "bmp" -> "bmp"
+            else -> "jpg"
+        }
+        
+        // Save without EXIF (ImageIO.write doesn't preserve EXIF orientation)
+        ImageIO.write(bufferedImage, format, targetPath.toFile())
+    }
+
+    /**
      * Loads an image, rotates it, and saves to target file.
+     * EXIF orientation data is not preserved in the output.
      * 
      * @param sourcePath Source image path
      * @param targetPath Target save path
@@ -98,7 +125,7 @@ class ExportService {
      * @param extension File extension to determine format
      */
     private fun saveRotatedImage(sourcePath: Path, targetPath: Path, rotationDegrees: Int, extension: String) {
-        // Read the image
+        // Read the image (raw pixels, no EXIF transformation)
         val bufferedImage = ImageIO.read(sourcePath.toFile())
             ?: throw IllegalArgumentException("Failed to read image: $sourcePath")
         
@@ -114,7 +141,7 @@ class ExportService {
             else -> "jpg"
         }
         
-        // Save rotated image
+        // Save rotated image (ImageIO.write doesn't preserve EXIF orientation)
         ImageIO.write(rotatedImage, format, targetPath.toFile())
     }
 

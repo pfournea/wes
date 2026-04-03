@@ -1,5 +1,6 @@
 package domain.model
 
+import domain.service.ExifService
 import java.nio.file.Path
 
 /**
@@ -14,12 +15,18 @@ data class Photo(
     val rotationDegrees: Int = 0  // Rotation in degrees: 0, 90, 180, 270
 ) {
     companion object {
+        private val exifService = ExifService()
+        
         fun fromPath(path: Path, index: Int): Photo {
+            // Read EXIF orientation to display photos correctly on import
+            val exifRotation = exifService.readOrientation(path)
+            
             return Photo(
                 id = generateId(path, index),
                 path = path,
                 fileName = path.fileName.toString(),
-                originalIndex = index
+                originalIndex = index,
+                rotationDegrees = exifRotation
             )
         }
 

@@ -8,9 +8,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.io.TempDir
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.imageio.ImageIO
 
 @DisplayName("ExportService Tests")
 class ExportServiceTest {
@@ -29,9 +32,16 @@ class ExportServiceTest {
     }
 
     private fun createTestPhoto(name: String, index: Int): Photo {
-        // Create actual file in temp directory
+        // Create actual valid image file in temp directory
         val photoPath = tempSourceDir.resolve(name)
-        Files.write(photoPath, "test image content".toByteArray())
+        val image = BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB).apply {
+            graphics.apply {
+                color = Color.BLUE
+                fillRect(0, 0, 100, 100)
+                dispose()
+            }
+        }
+        ImageIO.write(image, "jpg", photoPath.toFile())
         return Photo.fromPath(photoPath, index)
     }
 
