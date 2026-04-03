@@ -75,11 +75,14 @@ class PhotoCard(
         fileNameLabel.style = """
             -fx-font-size: ${StyleConstants.FONT_SIZE_BASE};
             -fx-font-weight: bold;
-            -fx-text-fill: ${StyleConstants.TEXT_SECONDARY};
-            -fx-padding: 4 4 0 4;
+            -fx-text-fill: ${StyleConstants.TEXT_PRIMARY};
+            -fx-padding: 6 8 6 8;
             -fx-text-overflow: ellipsis;
             -fx-max-width: ${StyleConstants.PHOTO_GRID_WIDTH};
             -fx-alignment: center;
+            -fx-background-color: rgba(255, 255, 255, 0.95);
+            -fx-background-radius: ${StyleConstants.RADIUS_SM};
+            -fx-effect: ${StyleConstants.SHADOW_SM};
         """.trimIndent()
         fileNameLabel.isWrapText = false
         fileNameLabel.maxWidthProperty().bind(imageView.fitWidthProperty())
