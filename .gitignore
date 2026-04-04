@@ -35,3 +35,4 @@ bin/
 /.idea/
 /.sisyphus/
 /.opencode/
+/node_modules/
