@@ -158,7 +158,8 @@ class CategoryCard(
         return """
             -fx-background-color: $bgColor;
             -fx-text-fill: $textColor;
-            -fx-font-size: ${StyleConstants.FONT_SIZE_BASE};
+            -fx-font-family: 'DejaVu Sans', 'Arial Unicode MS', 'Segoe UI Symbol', sans-serif;
+            -fx-font-size: 18;
             -fx-font-weight: bold;
             -fx-padding: 6 10 6 10;
             -fx-background-radius: ${StyleConstants.RADIUS_MD};
