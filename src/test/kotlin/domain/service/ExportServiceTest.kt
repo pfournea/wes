@@ -259,6 +259,249 @@ class ExportServiceTest {
     }
 
     @Nested
+    @DisplayName("Photo Rotation Tests")
+    inner class PhotoRotationTests {
+
+        private fun createColoredTestPhoto(name: String, index: Int, width: Int = 100, height: Int = 50, rotation: Int = 0): Photo {
+            // Create a distinctive image with different colors in each corner
+            // This allows us to verify rotation by checking pixel positions
+            val photoPath = tempSourceDir.resolve(name)
+            val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB).apply {
+                graphics.apply {
+                    // Top-left: Red
+                    color = Color.RED
+                    fillRect(0, 0, width / 2, height / 2)
+                    // Top-right: Green
+                    color = Color.GREEN
+                    fillRect(width / 2, 0, width / 2, height / 2)
+                    // Bottom-left: Blue
+                    color = Color.BLUE
+                    fillRect(0, height / 2, width / 2, height / 2)
+                    // Bottom-right: Yellow
+                    color = Color.YELLOW
+                    fillRect(width / 2, height / 2, width / 2, height / 2)
+                    dispose()
+                }
+            }
+            ImageIO.write(image, "jpg", photoPath.toFile())
+            return Photo(
+                id = "${index}_${name}",
+                path = photoPath,
+                fileName = name,
+                originalIndex = index,
+                rotationDegrees = rotation
+            )
+        }
+
+        private fun assertPixelColor(image: BufferedImage, x: Int, y: Int, expectedColor: Color, tolerance: Int = 30) {
+            val actualRGB = image.getRGB(x, y)
+            val actualColor = Color(actualRGB)
+            
+            // Allow some tolerance for JPEG compression artifacts
+            val redDiff = Math.abs(actualColor.red - expectedColor.red)
+            val greenDiff = Math.abs(actualColor.green - expectedColor.green)
+            val blueDiff = Math.abs(actualColor.blue - expectedColor.blue)
+            
+            assertTrue(
+                redDiff <= tolerance && greenDiff <= tolerance && blueDiff <= tolerance,
+                "Pixel at ($x, $y) expected ~${colorToString(expectedColor)} but was ${colorToString(actualColor)} " +
+                "(diff: R=$redDiff G=$greenDiff B=$blueDiff)"
+            )
+        }
+
+        private fun colorToString(color: Color): String {
+            return when {
+                isApproximately(color, Color.RED) -> "RED"
+                isApproximately(color, Color.GREEN) -> "GREEN"
+                isApproximately(color, Color.BLUE) -> "BLUE"
+                isApproximately(color, Color.YELLOW) -> "YELLOW"
+                else -> "RGB(${color.red},${color.green},${color.blue})"
+            }
+        }
+
+        private fun isApproximately(c1: Color, c2: Color, tolerance: Int = 30): Boolean {
+            return Math.abs(c1.red - c2.red) <= tolerance &&
+                   Math.abs(c1.green - c2.green) <= tolerance &&
+                   Math.abs(c1.blue - c2.blue) <= tolerance
+        }
+
+        @Test
+        fun `should export non-rotated photo without changes`() {
+            val photo = createColoredTestPhoto("test.jpg", 0, rotation = 0)
+            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            val exported = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            
+            // Verify dimensions unchanged
+            assertEquals(100, exported.width)
+            assertEquals(50, exported.height)
+            
+            // Verify colors in original positions
+            assertPixelColor(exported, 10, 10, Color.RED)      // Top-left
+            assertPixelColor(exported, 90, 10, Color.GREEN)    // Top-right
+            assertPixelColor(exported, 10, 40, Color.BLUE)     // Bottom-left
+            assertPixelColor(exported, 90, 40, Color.YELLOW)   // Bottom-right
+        }
+
+        @Test
+        fun `should rotate photo 90 degrees clockwise correctly`() {
+            val photo = createColoredTestPhoto("test.jpg", 0, rotation = 90)
+            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            val exported = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            
+            // After 90° CW: dimensions should be swapped (width=50, height=100)
+            assertEquals(50, exported.width)
+            assertEquals(100, exported.height)
+            
+            // After 90° CW rotation:
+            // Original top-left (Red) → new top-right
+            // Original top-right (Green) → new bottom-right
+            // Original bottom-left (Blue) → new top-left
+            // Original bottom-right (Yellow) → new bottom-left
+            assertPixelColor(exported, 10, 10, Color.BLUE)     // Top-left (was bottom-left)
+            assertPixelColor(exported, 40, 10, Color.RED)      // Top-right (was top-left)
+            assertPixelColor(exported, 10, 90, Color.YELLOW)   // Bottom-left (was bottom-right)
+            assertPixelColor(exported, 40, 90, Color.GREEN)    // Bottom-right (was top-right)
+        }
+
+        @Test
+        fun `should rotate photo 180 degrees correctly`() {
+            val photo = createColoredTestPhoto("test.jpg", 0, rotation = 180)
+            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            val exported = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            
+            // After 180°: dimensions stay same
+            assertEquals(100, exported.width)
+            assertEquals(50, exported.height)
+            
+            // After 180° rotation: everything is flipped
+            // Original top-left (Red) → new bottom-right
+            // Original top-right (Green) → new bottom-left
+            // Original bottom-left (Blue) → new top-right
+            // Original bottom-right (Yellow) → new top-left
+            assertPixelColor(exported, 10, 10, Color.YELLOW)   // Top-left (was bottom-right)
+            assertPixelColor(exported, 90, 10, Color.BLUE)     // Top-right (was bottom-left)
+            assertPixelColor(exported, 10, 40, Color.GREEN)    // Bottom-left (was top-right)
+            assertPixelColor(exported, 90, 40, Color.RED)      // Bottom-right (was top-left)
+        }
+
+        @Test
+        fun `should rotate photo 270 degrees clockwise correctly`() {
+            val photo = createColoredTestPhoto("test.jpg", 0, rotation = 270)
+            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            val exported = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            
+            // After 270° CW (or 90° CCW): dimensions should be swapped
+            assertEquals(50, exported.width)
+            assertEquals(100, exported.height)
+            
+            // After 270° CW rotation:
+            // Original top-left (Red) → new bottom-left
+            // Original top-right (Green) → new top-left
+            // Original bottom-left (Blue) → new bottom-right
+            // Original bottom-right (Yellow) → new top-right
+            assertPixelColor(exported, 10, 10, Color.GREEN)    // Top-left (was top-right)
+            assertPixelColor(exported, 40, 10, Color.YELLOW)   // Top-right (was bottom-right)
+            assertPixelColor(exported, 10, 90, Color.RED)      // Bottom-left (was top-left)
+            assertPixelColor(exported, 40, 90, Color.BLUE)     // Bottom-right (was bottom-left)
+        }
+
+        @Test
+        fun `should handle multiple photos with different rotations`() {
+            val photo0 = createColoredTestPhoto("test0.jpg", 0, rotation = 0)
+            val photo90 = createColoredTestPhoto("test90.jpg", 1, rotation = 90)
+            val photo180 = createColoredTestPhoto("test180.jpg", 2, rotation = 180)
+            val photo270 = createColoredTestPhoto("test270.jpg", 3, rotation = 270)
+            
+            val category = Category("cat1", 1, "Category 1", 
+                mutableListOf(photo0, photo90, photo180, photo270))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            assertEquals(4, result.photosCopied)
+            
+            // Verify all files exist
+            assertTrue(Files.exists(tempTargetDir.resolve("0001.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-01.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-02.jpg")))
+            assertTrue(Files.exists(tempTargetDir.resolve("0001-03.jpg")))
+            
+            // Verify 0° rotation
+            val exported0 = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            assertEquals(100, exported0.width)
+            assertEquals(50, exported0.height)
+            assertPixelColor(exported0, 10, 10, Color.RED)
+            
+            // Verify 90° rotation
+            val exported90 = ImageIO.read(tempTargetDir.resolve("0001-01.jpg").toFile())
+            assertEquals(50, exported90.width)
+            assertEquals(100, exported90.height)
+            assertPixelColor(exported90, 10, 10, Color.BLUE)
+            
+            // Verify 180° rotation
+            val exported180 = ImageIO.read(tempTargetDir.resolve("0001-02.jpg").toFile())
+            assertEquals(100, exported180.width)
+            assertEquals(50, exported180.height)
+            assertPixelColor(exported180, 10, 10, Color.YELLOW)
+            
+            // Verify 270° rotation
+            val exported270 = ImageIO.read(tempTargetDir.resolve("0001-03.jpg").toFile())
+            assertEquals(50, exported270.width)
+            assertEquals(100, exported270.height)
+            assertPixelColor(exported270, 10, 10, Color.GREEN)
+        }
+
+        @Test
+        fun `should maintain aspect ratio after rotation`() {
+            // Test with a clearly non-square image
+            val photo = createColoredTestPhoto("test.jpg", 0, width = 200, height = 100, rotation = 90)
+            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            val exported = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            
+            // After 90° rotation: 200x100 should become 100x200
+            assertEquals(100, exported.width)
+            assertEquals(200, exported.height)
+        }
+
+        @Test
+        fun `should preserve image quality after rotation`() {
+            val photo = createColoredTestPhoto("test.jpg", 0, rotation = 90)
+            val category = Category("cat1", 1, "Category 1", mutableListOf(photo))
+            
+            val result = exportService.exportCategories(listOf(category), tempTargetDir)
+            
+            assertTrue(result.success)
+            val exported = ImageIO.read(tempTargetDir.resolve("0001.jpg").toFile())
+            
+            // Verify the image is not corrupted and has the expected type
+            assertNotNull(exported)
+            assertTrue(exported.type == BufferedImage.TYPE_INT_RGB || 
+                      exported.type == BufferedImage.TYPE_3BYTE_BGR ||
+                      exported.type == BufferedImage.TYPE_INT_BGR)
+        }
+    }
+
+    @Nested
     @DisplayName("New Naming Format Tests")
     inner class NewNamingFormatTests {
 

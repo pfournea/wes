@@ -90,12 +90,16 @@ class ExportController(private val exportService: ExportService) {
     private fun createExportTask(categories: List<Category>, directory: File): Task<ExportResult> {
         return object : Task<ExportResult>() {
             override fun call(): ExportResult {
+                val totalPhotos = categories.sumOf { it.photos.size }
                 updateMessage("Exporting photos...")
-                updateProgress(0.0, 1.0)
+                updateProgress(0.0, totalPhotos.toDouble())
 
-                val result = exportService.exportCategories(categories, directory.toPath())
+                val result = exportService.exportCategories(categories, directory.toPath()) { current, total ->
+                    updateProgress(current.toDouble(), total.toDouble())
+                    updateMessage("Exporting photo $current of $total...")
+                }
 
-                updateProgress(1.0, 1.0)
+                updateProgress(totalPhotos.toDouble(), totalPhotos.toDouble())
                 updateMessage("Complete!")
 
                 return result
